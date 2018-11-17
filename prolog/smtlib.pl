@@ -180,10 +180,11 @@ spec_constant(X) --> token_hexadecimal(X), !.
 spec_constant(X) --> token_binary(X), !.
 spec_constant(X) --> token_string(X), !.
 
-s_expr(X) --> spec_constant(X), !, whitespaces.
-s_expr(X) --> token_symbol(X), !, whitespaces.
-s_expr(X) --> token_keyword(X), !, whitespaces.
-s_expr(X) --> ['('], whitespaces, s_exprs(X), [')'], whitespaces.
+s_expr(X) --> whitespaces, s_expr2(X).
+s_expr2(X) --> spec_constant(X), !, whitespaces.
+s_expr2(X) --> token_symbol(X), !, whitespaces.
+s_expr2(X) --> token_keyword(X), !, whitespaces.
+s_expr2(X) --> ['('], whitespaces, s_exprs(X), [')'], whitespaces.
 
-s_exprs([X|Xs]) --> s_expr(X), !, s_exprs(Xs).
+s_exprs([X|Xs]) --> s_expr2(X), !, s_exprs(Xs).
 s_exprs([]) --> [].
