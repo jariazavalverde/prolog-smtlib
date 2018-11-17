@@ -84,6 +84,13 @@ quoted([]) --> [].
 % The language uses a number of reserved words, sequences of (non-whitespace) characters
 % that are to be treated as individual tokens. Additionally, each command name in the
 % scripting language is also a reserved word.
+reserved_word(X) :- member(X, [
+    par, 'NUMERAL', 'DECIMAL', 'STRING', '_', '!', as, let, forall, exists,
+    'set-logic', 'set-option', 'set-info', 'declare-sort', 'define-sort',
+    'declare-fun', push, pop, assert, 'check-sat', 'get-assertions',
+    'get-proof', 'get-unsat-core', 'get-value', 'get-assignment', exit
+]).
+
 token_reserved(reserved(par)) --> [p,a,r].
 token_reserved(reserved('NUMERAL')) --> ['N','U','M','E','R','A','L'].
 token_reserved(reserved('DECIMAL')) --> ['D,','E,','C','I','M','A','L'].
@@ -112,3 +119,29 @@ token_reserved(reserved('get-unsat-core')) --> [g,e,t,'-',u,n,s,a,t,'-',c,o,r,e]
 token_reserved(reserved('get-value')) --> [g,e,t,'-',v,a,l,u,e].
 token_reserved(reserved('get-assignment')) --> [g,e,t,'-',a,s,s,i,g,n,m,e,n,t].
 token_reserved(reserved(exit)) --> [e,x,i,t].
+
+% A <symbol> is either a simple symbol or a quoted symbol. The former is any non-empty
+% sequence of letters, digits and the characters ~ ! @ $ % ^ & * _ - + = < > . ? / that
+% does not start with a digit and is not a reserved word. The latter is any sequence of
+% printable ASCII characters (including space, tab, and line-breaking characters) except
+% for the backslash character \, that starts and ends with | and does not otherwise contain |.
+token_symbol(X) --> token_simple_symbol(X).
+token_symbol(X) --> token_quoted_symbol(X).
+
+token_simple_symbol(symbol(Y)) -->
+    simple_symbol([X|Xs]),
+    {\+member(X, ['0','1','2','3','4','5','6','7','8','9']),
+    atom_chars(Y, [X|Xs]),
+    \+reserved_word(Y)}.
+
+simple_symbol([X|Xs]) --> [X],
+    {member(X, ['~','!','@','$','%','^','&','*','_','-','+','=','<','>','.','?','/']) ;
+    (char_code(X, C), C >= 97, C =< 122) ; 
+    (char_code(X, C), C >= 65, C =< 90)}, !,
+    simple_symbol(Xs).
+simple_symbol([]) --> [].
+
+token_quoted_symbol(symbol(Y)) --> ['|'], quoted_symbol(X), ['|'], {atom_chars(Y, X)}.
+
+quoted_symbol([X|Xs]) --> [X], {X \= '|', X \= '\\'}, quoted_symbol(Xs).
+quoted_symbol([]) --> [].
