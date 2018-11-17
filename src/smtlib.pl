@@ -80,3 +80,35 @@ quoted([X|Xs]) --> [X], {X \= '\\', X \= '"'}, !, quoted(Xs).
 quoted(['"'|Xs]) --> ['\\','"'], !, quoted(Xs).
 quoted(['\\'|Xs]) --> ['\\','\\'], !, quoted(Xs).
 quoted([]) --> [].
+
+% The language uses a number of reserved words, sequences of (non-whitespace) characters
+% that are to be treated as individual tokens. Additionally, each command name in the
+% scripting language is also a reserved word.
+token_reserved(reserved(par)) --> [p,a,r].
+token_reserved(reserved('NUMERAL')) --> ['N','U','M','E','R','A','L'].
+token_reserved(reserved('DECIMAL')) --> ['D,','E,','C','I','M','A','L'].
+token_reserved(reserved('STRING')) --> ['S','T','R','I','N','G'].
+token_reserved(reserved('_')) --> ['_'].
+token_reserved(reserved('!')) --> ['!'].
+token_reserved(reserved(as)) --> [a,s].
+token_reserved(reserved(let)) --> [l,e,t].
+token_reserved(reserved(forall)) --> [f,o,r,a,l,l].
+token_reserved(reserved(exists)) --> [e,x,i,s,t,s].
+
+token_reserved(reserved('set-logic')) --> [s,e,t,'-',l,o,g,i,c].
+token_reserved(reserved('set-option')) --> [s,e,t,'-',o,p,t,i,o,n].
+token_reserved(reserved('set-info')) --> [s,e,t,'-',i,n,f,o].
+token_reserved(reserved('declare-sort')) --> [d,e,c,l,a,r,e,'-',s,o,r,t].
+token_reserved(reserved('define-sort')) --> [d,e,f,i,n,e,'-',s,o,r,t].
+token_reserved(reserved('declare-fun')) --> [d,e,c,l,a,r,e,'-',f,u,n].
+token_reserved(reserved('define-fun')) --> [d,e,f,i,n,e,'-',f,u,n].
+token_reserved(reserved(push)) --> [p,u,s,h].
+token_reserved(reserved(pop)) --> [p,o,p].
+token_reserved(reserved(assert)) --> [a,s,s,e,r,t].
+token_reserved(reserved('check-sat')) --> [c,h,e,c,k,'-',s,a,t].
+token_reserved(reserved('get-assertions')) --> [g,e,t,'-',a,s,s,e,r,t,i,o,n,s].
+token_reserved(reserved('get-proof')) --> [g,e,t,'-',p,r,o,o,f].
+token_reserved(reserved('get-unsat-core')) --> [g,e,t,'-',u,n,s,a,t,'-',c,o,r,e].
+token_reserved(reserved('get-value')) --> [g,e,t,'-',v,a,l,u,e].
+token_reserved(reserved('get-assignment')) --> [g,e,t,'-',a,s,s,i,g,n,m,e,n,t].
+token_reserved(reserved(exit)) --> [e,x,i,t].
