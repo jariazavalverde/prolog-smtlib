@@ -2,10 +2,17 @@
   * 
   * FILENAME: smtlib.pl
   * DESCRIPTION: This module contains predicates for parsing SMTLIB programs.
-  * AUTHORS: José Antonio Riaza Valverde
+  * AUTHORS: José Antonio Riaza Valverde <riaza.valverde@gmail.com>
+  * GITHUB: https://github.com/jariazavalverde/smtlib2prolog
   * UPDATED: 17.11.2018
   * 
   **/
+
+
+
+:- module(smtlib, [
+    smtlib_parse_expression/2
+]).
 
 
 
@@ -18,6 +25,16 @@
   * http://smtlib.cs.uiowa.edu/papers/smt-lib-reference-v2.0-r12.09.09.pdf
   * 
   **/
+
+
+
+% smtlib_parse_expression/2
+% smtlib_parse_expression(+Chars, ?Expression)
+%
+% This predicate succeeds when +Chars is a list of characters and
+% ?Expression is the expression resulting from parsing +Chars as an
+% S-Expression of SMT-LIM.
+smtlib_parse_expression(Chars, Expression) :- s_expr(Expression, Chars, []).
 
 
 
@@ -41,17 +58,18 @@ whitespaces --> whitespace, !, whitespaces.
 whitespaces --> [].
 
 % A <numeral> is the digit 0 or a non-empty sequence of digits not starting with 0.
-token_numeral(numeral(Y)) --> numeral(X), {X \= [], number_chars(Y, X)}.
+token_numeral(numeral(Y)) --> numeral([X|Xs]), {X \= '0', number_chars(Y, [X|Xs])}.
 
-numeral(['0']) --> ['0'].
-numeral([X|Xs]) --> [X], {member(X, ['1','2','3','4','5','6','7','8','9'])}, !, numeral(Xs).
+numeral([X|Xs]) --> [X], {char_code(X, C), C >= 48, C =< 57}, !, numeral(Xs).
 numeral([]) --> [].
 
 % A <decimal> is a token of the form <numeral>.0*<numeral>.
-token_decimal(decimal(X,Y)) --> token_numeral(numeral(X)), ['.'], zeros, token_numeral(numeral(Y)).
-
-zeros --> ['0'], !, zeros.
-zeros --> [].
+token_decimal(decimal(D)) -->
+    token_numeral(numeral(X)),
+    ['.'], numeral(Y),
+    {atom_chars(Z, ['.'|Y]),
+    atom_concat(X, Z, W),
+    atom_number(W, D)}.
 
 % A <hexadecimal> is a non-empty case-insensitive sequence of digits and letters
 % from A to F preceded by the (case sensitive) characters #x.
@@ -130,8 +148,7 @@ token_symbol(X) --> token_quoted_symbol(X).
 token_simple_symbol(symbol(Y)) -->
     simple_symbol([X|Xs]),
     {\+member(X, ['0','1','2','3','4','5','6','7','8','9']),
-    atom_chars(Y, [X|Xs]),
-    \+reserved_word(Y)}.
+    atom_chars(Y, [X|Xs])}.
 
 simple_symbol([X|Xs]) --> [X],
     {member(X, ['~','!','@','$','%','^','&','*','_','-','+','=','<','>','.','?','/']) ;
