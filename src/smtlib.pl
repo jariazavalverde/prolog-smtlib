@@ -21,24 +21,24 @@
 
 
 
-% WHITESPACES
+% LEXICON
+% SMT-LIB source files consist of ASCII characters.
 
 % A comment is any character sequence not contained within a string literal
 % or a quoted symbol that begins with the semicolon character ; and ends 
-% with the first subsequent line-breaking character. Comments together with
-% the space, tab and line-breaking characters are all considered whitespace.
-
+% with the first subsequent line-breaking character.
 comment --> [X], {X \= '\n'}, !, comment.
 comment --> [].
 
+% Comments together with the space, tab and line-breaking characters are all
+% considered whitespace.
 whitespace --> [' '].
 whitespace --> ['\t'].
 whitespace --> ['\n'].
 whitespace --> [';'], comment, ['\n'].
 
-
-
-% LEXICON
+whitespaces --> whitespace, !, whitespaces.
+whitespaces --> [].
 
 % A <numeral> is the digit 0 or a non-empty sequence of digits not starting with 0.
 token_numeral(numeral(Y)) --> numeral(X), {X \= [], number_chars(Y, X)}.
@@ -48,7 +48,7 @@ numeral([X|Xs]) --> [X], {member(X, ['1','2','3','4','5','6','7','8','9'])}, !, 
 numeral([]) --> [].
 
 % A <decimal> is a token of the form <numeral>.0*<numeral>.
-token_decimal(decimal(X,Y)) --> numeral(X), zeros, numeral(Y).
+token_decimal(decimal(X,Y)) --> token_numeral(numeral(X)), ['.'], zeros, token_numeral(numeral(Y)).
 
 zeros --> ['0'], !, zeros.
 zeros --> [].
@@ -73,7 +73,6 @@ binary([]) --> [].
 % treated as a single character—respectively " and \.  The first escape sequence allows
 % as usual the double quote character to appear within a string literal, the second allows
 % the backslash character to end a string literal.
-
 token_string(string(Y)) --> ['"'], quoted(X), ['"'], {atom_chars(Y, X)}.
 
 quoted([X|Xs]) --> [X], {X \= '\\', X \= '"'}, !, quoted(Xs).
@@ -136,6 +135,7 @@ token_simple_symbol(symbol(Y)) -->
 
 simple_symbol([X|Xs]) --> [X],
     {member(X, ['~','!','@','$','%','^','&','*','_','-','+','=','<','>','.','?','/']) ;
+    (char_code(X, C), C >= 48, C =< 57) ; 
     (char_code(X, C), C >= 97, C =< 122) ; 
     (char_code(X, C), C >= 65, C =< 90)}, !,
     simple_symbol(Xs).
@@ -145,3 +145,28 @@ token_quoted_symbol(symbol(Y)) --> ['|'], quoted_symbol(X), ['|'], {atom_chars(Y
 
 quoted_symbol([X|Xs]) --> [X], {X \= '|', X \= '\\'}, quoted_symbol(Xs).
 quoted_symbol([]) --> [].
+
+% A <keyword> is a non-empty sequence of letters, digits, and the characters
+% ~ ! @ $ % ^ & * _ - + = < > . ? / preceded by the character :.
+token_keyword(keyword(Y)) --> [':'], simple_symbol(X), {atom_chars(Y, X)}.
+
+
+
+% S-EXPRESSIONS
+
+% An S-expression is either a non-parenthesis token or a (possibly  empty) sequence of
+% S-expressions enclosed in parentheses. Every syntactic category of the SMT-LIB language
+% is a specialization of the category <s-expr> defined by the production rules below.
+spec_constant(X) --> token_decimal(X), !.
+spec_constant(X) --> token_numeral(X), !.
+spec_constant(X) --> token_hexadecimal(X), !.
+spec_constant(X) --> token_binary(X), !.
+spec_constant(X) --> token_string(X), !.
+
+s_expr(X) --> spec_constant(X), !, whitespaces.
+s_expr(X) --> token_symbol(X), !, whitespaces.
+s_expr(X) --> token_keyword(X), !, whitespaces.
+s_expr(X) --> ['('], whitespaces, s_exprs(X), [')'], whitespaces.
+
+s_exprs([X|Xs]) --> s_expr(X), !, s_exprs(Xs).
+s_exprs([]) --> [].
