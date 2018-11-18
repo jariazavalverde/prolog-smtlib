@@ -7,11 +7,27 @@ SMT-LIB is an international initiative aimed at facilitating research and develo
 - a language for specifying logics, suitably restricted classes of formulas to be checked for satisfiability with respect to a specific background theory;
 - a command language for interacting with SMT solvers via a textual interface that allows asserting and retracting formulas, querying about their satisfiability, examining their models or their unsatisfiability proofs, and so on.
 
+## Installation
+
+### SWI-Prolog
+```pl
+?- pack_install('https://github.com/jariazavalverde/prolog-smtlib/releases/smtlib-latest.tgz').
+```
+
 ## Usage
+
+```pl
+:- use_module(smtlib).
+```
+
+- **smtlib_read_script/2** - reads SMT-LIB script from file.
+- **smtlib_parse_script/2** - parses SMT-LIB script from chars.
+- **smtlib_read_expression/2** - reads SMT-LIB expression from file.
+- **smtlib_parse_expression/2** - parses SMT-LIB expression from chars.
 
 ### Read SMT-LIB scripts
 
-```
+```pl
 ?- smtlib_read_script('../sample/script/figure-3.4.smt', X).
 X = [
   [reserved(set-logic),symbol(QF_LIA)],
