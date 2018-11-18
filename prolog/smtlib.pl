@@ -302,3 +302,47 @@ logic_attributes([X|Xs]) --> logic_attribute(X), !, logic_attributes(Xs).
 logic_attributes([]) --> [].
 
 logic([symbol(logic),X|Xs]) --> lpar, symbol(symbol(logic)), symbol(X), logic_attributes(Xs), {Xs \= []}, rpar.
+
+
+
+% SCRIPTS
+
+% Scripts are sequences of commands. In line with the LISP-like syntax, all commands look
+% like LISP-function applications, with a command name applied to zero or more arguments.
+
+command([reserved('set-logic'),X]) --> lpar, reserved_word(reserved('set-logic')), symbol(X), rpar.
+command([reserved('set-option'),X]) --> lpar, reserved_word(reserved('set-option')), option(X), rpar.
+command([reserved('set-info'),X]) --> lpar, reserved_word(reserved('set-info')), attribute(X), rpar.
+command([reserved('declare-sort'),X,Y]) --> lpar, reserved_word(reserved('declare-sort')), symbol(X), numeral(Y), rpar.
+command([reserved('define-sort'),X,Y,Z]) --> lpar, reserved_word(reserved('define-sort')), symbol(X), lpar, symbols(Y), rpar, sort(Z), rpar.
+command([reserved('declare-fun'),X,Y,Z]) --> lpar, reserved_word(reserved('declare-fun')), symbol(X), lpar, sorts(Y), rpar, sort(Z), rpar.
+command([reserved('define-fun'),X,Y,Z,W]) --> lpar, reserved_word(reserved('define-fun')), symbol(X), lpar, sorted_vars(Y), rpar, sort(Z), term(W), rpar.
+command([reserved(push),X]) --> lpar, reserved_word(reserved(push)), numeral(X), rpar.
+command([reserved(pop),X]) --> lpar, reserved_word(reserved(pop)), numeral(X), rpar.
+command([reserved(assert),X]) --> lpar, reserved_word(reserved(assert)), term(X), rpar.
+command([reserved(X)]) --> lpar, reserved_word(reserved(X)), {member(X,['check-sat','get-assertions','get-proof','get-unsat-core','get-assignment',exit])}, rpar.
+command([reserved('get-value'),Xs]) --> lpar, reserved_word(reserved('get-value')), lpar, terms(Xs), {Xs \= []}, rpar, rpar.
+command([reserved('get-option'),X]) --> lpar, reserved_word(reserved('get-option')), keyword(X), rpar.
+command([reserved('get-info'),X]) --> lpar, reserved_word(reserved('get-info')), info_flag(X), rpar.
+
+script([X|Xs]) --> command(X), !, script(Xs).
+script([]) --> [].
+
+% The command set-option takes as argument expressions of the syntactic category <option>
+% which have the same form as attributes with values. Options with the predefined keywords
+% below have a prescribed usage and semantics.
+
+b_value(symbol(X)) --> symbol(symbol(X)), {member(X, [true,false])}.
+
+option([keyword(X),Y]) --> keyword(keyword(X)), {member(X,['print-success','expand-definitions','interactive-mode','produce-proofs','produce-unsat-cores','produce-models','produce-assignments','regular-output-channel'])}, b_value(Y).
+option([keyword('diagnostic-output-channel'),X]) --> keyword(keyword('diagnostic-output-channel')), string(X).
+option([keyword('random-seed'),X]) --> keyword(keyword('random-seed')), numeral(X).
+option([keyword('verbosity'),X]) --> keyword(keyword('verbosity')), numeral(X).
+option(X) --> attribute(X).
+
+% The command get-info takes as argument expressions of the syntactic category <info_flag>
+% which are flags with the same form as keywords. The predefined flags below have a prescribed
+% usage and semantics.
+
+info_flag(keyword(X)) --> keyword(keyword(X)), {member(X,['error-behavior',name,authors,version,status,'reason-unknown','all-statistics'])}, !.
+info_flag(X) --> keyword(X).
