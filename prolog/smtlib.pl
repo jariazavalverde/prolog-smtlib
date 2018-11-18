@@ -108,34 +108,10 @@ reserved_word(X) :- member(X, [
     'get-proof', 'get-unsat-core', 'get-value', 'get-assignment', exit
 ]).
 
-token_reserved(reserved(par)) --> [p,a,r].
-token_reserved(reserved('NUMERAL')) --> ['N','U','M','E','R','A','L'].
-token_reserved(reserved('DECIMAL')) --> ['D,','E,','C','I','M','A','L'].
-token_reserved(reserved('STRING')) --> ['S','T','R','I','N','G'].
-token_reserved(reserved('_')) --> ['_'].
-token_reserved(reserved('!')) --> ['!'].
-token_reserved(reserved(as)) --> [a,s].
-token_reserved(reserved(let)) --> [l,e,t].
-token_reserved(reserved(forall)) --> [f,o,r,a,l,l].
-token_reserved(reserved(exists)) --> [e,x,i,s,t,s].
-
-token_reserved(reserved('set-logic')) --> [s,e,t,'-',l,o,g,i,c].
-token_reserved(reserved('set-option')) --> [s,e,t,'-',o,p,t,i,o,n].
-token_reserved(reserved('set-info')) --> [s,e,t,'-',i,n,f,o].
-token_reserved(reserved('declare-sort')) --> [d,e,c,l,a,r,e,'-',s,o,r,t].
-token_reserved(reserved('define-sort')) --> [d,e,f,i,n,e,'-',s,o,r,t].
-token_reserved(reserved('declare-fun')) --> [d,e,c,l,a,r,e,'-',f,u,n].
-token_reserved(reserved('define-fun')) --> [d,e,f,i,n,e,'-',f,u,n].
-token_reserved(reserved(push)) --> [p,u,s,h].
-token_reserved(reserved(pop)) --> [p,o,p].
-token_reserved(reserved(assert)) --> [a,s,s,e,r,t].
-token_reserved(reserved('check-sat')) --> [c,h,e,c,k,'-',s,a,t].
-token_reserved(reserved('get-assertions')) --> [g,e,t,'-',a,s,s,e,r,t,i,o,n,s].
-token_reserved(reserved('get-proof')) --> [g,e,t,'-',p,r,o,o,f].
-token_reserved(reserved('get-unsat-core')) --> [g,e,t,'-',u,n,s,a,t,'-',c,o,r,e].
-token_reserved(reserved('get-value')) --> [g,e,t,'-',v,a,l,u,e].
-token_reserved(reserved('get-assignment')) --> [g,e,t,'-',a,s,s,i,g,n,m,e,n,t].
-token_reserved(reserved(exit)) --> [e,x,i,t].
+token_reserved(reserved(Y)) -->
+    simple_symbol([X|Xs]),
+    {atom_chars(Y, [X|Xs]),
+    reserved_word(Y)}.
 
 % A <symbol> is either a simple symbol or a quoted symbol. The former is any non-empty
 % sequence of letters, digits and the characters ~ ! @ $ % ^ & * _ - + = < > . ? / that
@@ -197,7 +173,7 @@ s_exprs([]) --> [].
 % Indexed identifiers are defined more systematically as the application of the reserved
 % word _ to a symbol and one or more indices, given by numerals.
 identifier(identifier(Xs)) --> ['('], whitespaces, ['_'], whitespaces, numerals(Xs), {Xs \= []}, [')'], whitespaces.
-identifier(identifier(X)) --> token_symbol(X).
+identifier(identifier(X)) --> token_symbol(X), whitespaces.
 
 numerals([X|Xs]) --> numeral(X), !, whitespaces, numerals(Xs).
 numerals([]) --> [].
@@ -209,13 +185,15 @@ numerals([]) --> [].
 % These are generally pairs consisting of an attribute name and an associated value,
 % although attributes with no value are also allowed.
 
-attribute_value(X) --> spec_constant(X), !.
-attribute_value(X) --> token_symbol(X), !.
+attribute_value(X) --> spec_constant(X), !, whitespaces.
+attribute_value(X) --> token_symbol(X), !, whitespaces.
 attribute_value(Xs) --> ['('], whitespaces, s_exprs(Xs), [')'], whitespaces.
 
 attribute(attr(X,Xs)) --> token_keyword(X), whitespaces, attribute_value(Xs), !, whitespaces.
 attribute(attr(X)) --> token_keyword(X), whitespaces.
 
+attributes([X|Xs]) --> attribute(X), !, attributes(Xs).
+attributes([]) --> [].
 
 
 % SORTS
@@ -228,3 +206,33 @@ sort(sort(X, [])) --> identifier(X), whitespaces.
 
 sorts([X|Xs]) --> sort(X), sorts(Xs).
 sorts([]) --> [].
+
+
+
+% TERMS AND FORMULAS
+
+% Well-sorted terms are a subset of the set of all terms. The latter are constructed out of
+% constant symbols in the <spec-constant> category (numerals, rationals, strings, etc.),
+% variables, function symbols, three kinds of binders--the reserved words let, forall and
+% exists--and an annotation operator--the reserved word !.
+
+qual_identifier(qualified(X)) --> identifier(X).
+qual_identifier(qualified(X,Y)) --> ['('], whitespaces, [a,s], whitespaces, identifier(X), sort(Y), [')'], whitespaces.
+
+var_binding(binding(X,Y)) --> ['('], whitespaces, token_symbol(X), whitespaces, term(Y), [')'], whitespaces.
+var_bindings([X|Xs]) --> var_binding(X), !, var_bindings(Xs).
+var_bindings([]) --> [].
+
+sorted_var(var(X,Y)) --> ['('], whitespaces, token_symbol(X), whitespaces, sort(Y), [')'], whitespaces.
+sorted_vars([X|Xs]) --> sorted_var(X), !, sorted_vars(Xs).
+sorted_vars([]) --> [].
+
+term(term(X)) --> spec_constant(X), whitespaces.
+term(term(X)) --> qual_identifier(X).
+term(term(X,Xs)) --> ['('], whitespaces, qual_identifier(X), whitespaces, terms(Xs), {Xs \= []}, [')'], whitespaces.
+term(term(let, Xs, X)) --> ['('], whitespaces, token_reserved(reserved(let)), whitespaces, ['('], whitespaces, var_bindings(Xs), {Xs \= []}, [')'], whitespaces, term(X), [')'], whitespaces.
+term(term(Y, Xs, X)) --> ['('], whitespaces, token_reserved(reserved(Y)), {member(Y, [forall, exists])}, whitespaces, ['('], whitespaces, sorted_vars(Xs), {Xs \= []}, [')'], whitespaces, term(X), [')'], whitespaces.
+term(term('!', Xs)) --> ['('], whitespaces, token_reserved(reserved('!')), whitespaces, attributes(Xs), {Xs \= []}, [')'], whitespaces.
+
+terms([X|Xs]) --> term(X), !, terms(Xs).
+terms([]) --> [].
