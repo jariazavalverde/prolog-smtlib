@@ -244,7 +244,6 @@ identifier(X) --> symbol(X).
 
 % These are generally pairs consisting of an attribute name and an associated value,
 % although attributes with no value are also allowed.
-
 attribute_value(X) --> spec_constant(X), !.
 attribute_value(X) --> symbol(X), !.
 attribute_value(Xs) --> lpar, s_exprs(Xs), rpar.
@@ -260,7 +259,6 @@ attributes([]) --> [].
 
 % A sort symbol can be either the distinguished symbol Bool or any <identifier>. A sort
 % parameter can be any <symbol> (which in turn, is an <identifier>).
-
 sort([X|Xs]) --> lpar, identifier(X), sorts(Xs), {Xs \= []}, rpar.
 sort(X) --> identifier(X).
 
@@ -275,7 +273,6 @@ sorts([]) --> [].
 % constant symbols in the <spec-constant> category (numerals, rationals, strings, etc.),
 % variables, function symbols, three kinds of binders--the reserved words let, forall and
 % exists--and an annotation operator--the reserved word !.
-
 qual_identifier(X) --> identifier(X).
 qual_identifier([reserved(as),X,Y]) --> lpar, [a,s], whitespaces, identifier(X), sort(Y), rpar.
 
@@ -306,7 +303,6 @@ terms([]) --> [].
 % with the following predefined keywords have a prescribed usage and semantics: :definition,
 % :funs, :funs-description, :notes, :sorts, :sorts-description, and :values. Additionally, a
 % theory declaration can contain any number of user-defined attributes.
-
 sort_symbol_decl([X,Y,Z]) --> lpar, identifier(X), numeral(Y), attributes(Z), rpar.
 sort_symbol_decls([X|Xs]) --> sort_symbol_decl(X), !, sort_symbol_decls(Xs).
 sort_symbol_decls([]) --> [].
@@ -360,7 +356,6 @@ logic([symbol(logic),X|Xs]) --> lpar, symbol(symbol(logic)), symbol(X), logic_at
 
 % Scripts are sequences of commands. In line with the LISP-like syntax, all commands look
 % like LISP-function applications, with a command name applied to zero or more arguments.
-
 command([reserved('set-logic'),X]) --> lpar, reserved_word(reserved('set-logic')), symbol(X), rpar.
 command([reserved('set-option'),X]) --> lpar, reserved_word(reserved('set-option')), option(X), rpar.
 command([reserved('set-info'),X]) --> lpar, reserved_word(reserved('set-info')), attribute(X), rpar.
@@ -383,7 +378,6 @@ script2([]) --> [].
 % The command set-option takes as argument expressions of the syntactic category <option>
 % which have the same form as attributes with values. Options with the predefined keywords
 % below have a prescribed usage and semantics.
-
 b_value(symbol(X)) --> symbol(symbol(X)), {member(X, [true,false])}.
 
 option([keyword(X),Y]) --> keyword(keyword(X)), {member(X,['print-success','expand-definitions','interactive-mode','produce-proofs','produce-unsat-cores','produce-models','produce-assignments','regular-output-channel'])}, b_value(Y).
@@ -395,6 +389,5 @@ option(X) --> attribute(X).
 % The command get-info takes as argument expressions of the syntactic category <info_flag>
 % which are flags with the same form as keywords. The predefined flags below have a prescribed
 % usage and semantics.
-
 info_flag(keyword(X)) --> keyword(keyword(X)), {member(X,['error-behavior',name,authors,version,status,'reason-unknown','all-statistics'])}, !.
 info_flag(X) --> keyword(X).

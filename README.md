@@ -12,7 +12,7 @@ SMT-LIB is an international initiative aimed at facilitating research and develo
 ### Read SMT-LIB scripts
 
 ```
-?- smtlib_read_script('../sample/figure-3.4.smt', X).
+?- smtlib_read_script('../sample/script/figure-3.4.smt', X).
 X = [
   [reserved(set-logic),symbol(QF_LIA)],
   [reserved(declare-fun),symbol(w),[],symbol(Int)],
@@ -26,7 +26,8 @@ X = [
   [reserved(assert),[symbol(>),symbol(z),symbol(x)]],
   [reserved(check-sat)],
   [reserved(get-info),keyword(all-statistics)],
-  [reserved(pop),numeral(1)],[reserved(push),numeral(1)],
+  [reserved(pop),numeral(1)],
+  [reserved(push),numeral(1)],
   [reserved(check-sat)],
   [reserved(exit)]
 ].
