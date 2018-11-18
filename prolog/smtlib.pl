@@ -1,9 +1,9 @@
 /**
   * 
   * FILENAME: smtlib.pl
-  * DESCRIPTION: This module contains predicates for parsing SMTLIB programs.
+  * DESCRIPTION: This module contains predicates for parsing SMT-LIB programs.
   * AUTHORS: José Antonio Riaza Valverde <riaza.valverde@gmail.com>
-  * GITHUB: https://github.com/jariazavalverde/smtlib2prolog
+  * GITHUB: https://github.com/jariazavalverde/prolog-smtlib
   * UPDATED: 17.11.2018
   * 
   **/
@@ -148,7 +148,8 @@ token_symbol(X) --> token_quoted_symbol(X).
 token_simple_symbol(symbol(Y)) -->
     simple_symbol([X|Xs]),
     {\+member(X, ['0','1','2','3','4','5','6','7','8','9']),
-    atom_chars(Y, [X|Xs])}.
+    atom_chars(Y, [X|Xs]),
+    \+reserved_word(Y)}.
 
 simple_symbol([X|Xs]) --> [X],
     {member(X, ['~','!','@','$','%','^','&','*','_','-','+','=','<','>','.','?','/']) ;
@@ -188,3 +189,42 @@ s_expr2(X) --> ['('], whitespaces, s_exprs(X), [')'], whitespaces.
 
 s_exprs([X|Xs]) --> s_expr2(X), !, s_exprs(Xs).
 s_exprs([]) --> [].
+
+
+
+% IDENTIFIERS
+
+% Indexed identifiers are defined more systematically as the application of the reserved
+% word _ to a symbol and one or more indices, given by numerals.
+identifier(identifier(Xs)) --> ['('], whitespaces, ['_'], whitespaces, numerals(Xs), {Xs \= []}, [')'], whitespaces.
+identifier(identifier(X)) --> token_symbol(X).
+
+numerals([X|Xs]) --> numeral(X), !, whitespaces, numerals(Xs).
+numerals([]) --> [].
+
+
+
+% ATTRIBUTES
+
+% These are generally pairs consisting of an attribute name and an associated value,
+% although attributes with no value are also allowed.
+
+attribute_value(X) --> spec_constant(X), !.
+attribute_value(X) --> token_symbol(X), !.
+attribute_value(Xs) --> ['('], whitespaces, s_exprs(Xs), [')'], whitespaces.
+
+attribute(attr(X,Xs)) --> token_keyword(X), whitespaces, attribute_value(Xs), !, whitespaces.
+attribute(attr(X)) --> token_keyword(X), whitespaces.
+
+
+
+% SORTS
+
+% A sort symbol can be either the distinguished symbol Bool or any <identifier>. A sort
+% parameter can be any <symbol> (which in turn, is an <identifier>).
+
+sort(sort(X, Xs)) --> ['('], whitespaces, identifier(X), whitespaces, sorts(Xs), {Xs \= []}, [')'], whitespaces.
+sort(sort(X, [])) --> identifier(X), whitespaces.
+
+sorts([X|Xs]) --> sort(X), sorts(Xs).
+sorts([]) --> [].
