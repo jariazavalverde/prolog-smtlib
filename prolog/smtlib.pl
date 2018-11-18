@@ -4,7 +4,7 @@
   * DESCRIPTION: This module contains predicates for parsing SMT-LIB programs.
   * AUTHORS: José Antonio Riaza Valverde <riaza.valverde@gmail.com>
   * GITHUB: https://github.com/jariazavalverde/prolog-smtlib
-  * UPDATED: 17.11.2018
+  * UPDATED: 18.11.2018
   * 
   **/
 
