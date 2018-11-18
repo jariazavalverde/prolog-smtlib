@@ -279,14 +279,26 @@ par_fun_symbol_decls([]) --> [].
 
 theory_attribute([keyword(sorts),Xs]) -->  keyword(keyword(sorts)), lpar, sort_symbol_decls(Xs), {Xs \= []}, rpar, !.
 theory_attribute([keyword(sorts),Xs]) -->  keyword(keyword(funs)), lpar, par_fun_symbol_decls(Xs), {Xs \= []}, rpar, !.
-theory_attribute([keyword('sorts-description'),X]) -->  keyword(keyword('sorts-description')), string(X), !.
-theory_attribute([keyword('funs-description'),X]) -->  keyword(keyword('funs-description')), string(X), !.
-theory_attribute([keyword(definition),X]) -->  keyword(keyword(definition)), string(X), !.
-theory_attribute([keyword(values),X]) -->  keyword(keyword(values)), string(X), !.
-theory_attribute([keyword(notes),X]) -->  keyword(keyword(notes)), string(X), !.
+theory_attribute([keyword(X),Y]) -->  keyword(keyword(X)), {member(X,['sorts-description','funs-description',definition,values,notes])}, string(Y), !.
 theory_attribute(X) -->  attribute(X), !.
 
 theory_attributes([X|Xs]) --> theory_attribute(X), !, theory_attributes(Xs).
 theory_attributes([]) --> [].
 
 theory_decl([symbol(theory),X|Y]) --> lpar, symbol(symbol(theory)), symbol(X), theory_attributes(Y), {Y \= []}, rpar.
+
+
+
+% LOGIC DECLARATIONS
+
+% Attributes with the following predefined keywords have a prescribed usage and semantics
+% in logic declarations: :theories, :language, :extensions, :notes, and :values. Additionally,
+% as with theories, a logic declaration can contain any number of user-defined  attributes.
+logic_attribute([keyword(theories),Xs]) --> keyword(keyword(theories)), lpar, symbols(Xs), {Xs \= []}, rpar, !.
+logic_attribute([keyword(X),Y]) --> keyword(keyword(X)), {member(X,[language,extensions,values,notes])}, string(Y), !.
+logic_attribute(X) --> attribute(X).
+
+logic_attributes([X|Xs]) --> logic_attribute(X), !, logic_attributes(Xs).
+logic_attributes([]) --> [].
+
+logic([symbol(logic),X|Xs]) --> lpar, symbol(symbol(logic)), symbol(X), logic_attributes(Xs), {Xs \= []}, rpar.
