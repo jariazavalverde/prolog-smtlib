@@ -11,7 +11,10 @@
 
 
 :- module(smtlib, [
-    smtlib_parse_expression/2
+    smtlib_read_expression/2,
+    smtlib_read_script/2,
+    smtlib_parse_expression/2,
+    smtlib_parse_script/2
 ]).
 
 
@@ -28,6 +31,31 @@
 
 
 
+% EXPORTED PREDICATES
+
+% smtlib_read_expression/2
+% smtlib_read_expression(+Path, ?Expression)
+%
+% This predicate succeeds when file +Path exists and ?Expression
+% is the expression resulting from parsing the file as an
+% S-Expression of SMT-LIM.
+smtlib_read_expression(Path, Expression) :-
+    open(Path, read, Stream),
+    stream_to_list(Stream, Chars),
+    close(Stream),
+    smtlib_parse_expression(Chars, Expression).
+
+% smtlib_read_script/2
+% smtlib_read_script(+Chars, ?Script)
+%
+% This predicate succeeds when file +Path exists and ?Script is
+% the script resulting from parsing +Chars as an SMT-LIM script.
+smtlib_read_script(Path, Script) :-
+    open(Path, read, Stream),
+    stream_to_list(Stream, Chars),
+    close(Stream),
+    smtlib_parse_script(Chars, Script).
+
 % smtlib_parse_expression/2
 % smtlib_parse_expression(+Chars, ?Expression)
 %
@@ -35,6 +63,29 @@
 % ?Expression is the expression resulting from parsing +Chars as an
 % S-Expression of SMT-LIM.
 smtlib_parse_expression(Chars, Expression) :- s_expr(Expression, Chars, []).
+
+% smtlib_parse_script/2
+% smtlib_parse_script(+Chars, ?Script)
+%
+% This predicate succeeds when +Chars is a list of characters and
+% ?Script is the script resulting from parsing +Chars as an SMT-LIM script.
+smtlib_parse_script(Chars, Script) :- script(Script, Chars, []).
+
+
+
+% UTILS
+
+% stream_to_list/2
+% stream_to_list(+Stream, ?List)
+%
+% This predicate succeeds when ?List is the lists
+% of characters reads from the stream +Stream.
+stream_to_list(Stream, []) :-
+    at_end_of_stream(Stream), !.
+stream_to_list(Stream, [Char|Input]) :-
+    get_code(Stream, Code),
+    char_code(Char, Code),
+stream_to_list(Stream, Input).
 
 
 
@@ -112,7 +163,7 @@ reserved_word(X) :- member(X, [
     par, 'NUMERAL', 'DECIMAL', 'STRING', '_', '!', as, let, forall, exists,
     'set-logic', 'set-option', 'set-info', 'declare-sort', 'define-sort',
     'declare-fun', push, pop, assert, 'check-sat', 'get-assertions',
-    'get-proof', 'get-unsat-core', 'get-value', 'get-assignment', exit
+    'get-proof', 'get-unsat-core', 'get-value', 'get-assignment', 'get-info', exit
 ]).
 
 reserved_word(reserved(Y)) -->
@@ -325,8 +376,9 @@ command([reserved('get-value'),Xs]) --> lpar, reserved_word(reserved('get-value'
 command([reserved('get-option'),X]) --> lpar, reserved_word(reserved('get-option')), keyword(X), rpar.
 command([reserved('get-info'),X]) --> lpar, reserved_word(reserved('get-info')), info_flag(X), rpar.
 
-script([X|Xs]) --> command(X), !, script(Xs).
-script([]) --> [].
+script(X) --> whitespaces, script2(X).
+script2([X|Xs]) --> command(X), !, script2(Xs).
+script2([]) --> [].
 
 % The command set-option takes as argument expressions of the syntactic category <option>
 % which have the same form as attributes with values. Options with the predefined keywords
