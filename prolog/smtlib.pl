@@ -289,7 +289,7 @@ term(X) --> qual_identifier(X).
 term([X|Xs]) --> lpar, qual_identifier(X), terms(Xs), {Xs \= []}, rpar.
 term([reserved(let), Xs, X]) --> lpar, reserved_word(reserved(let)), lpar, var_bindings(Xs), {Xs \= []}, rpar, term(X), rpar.
 term([reserved(Y), Xs, X]) --> lpar, reserved_word(reserved(Y)), {member(Y, [forall, exists])}, lpar, sorted_vars(Xs), {Xs \= []}, rpar, term(X), rpar.
-term([reserved('!')|Xs]) --> lpar, reserved_word(reserved('!')), attributes(Xs), {Xs \= []}, rpar.
+term([reserved('!'),X|Xs]) --> lpar, reserved_word(reserved('!')), term(X), attributes(Xs), {Xs \= []}, rpar.
 
 terms([X|Xs]) --> term(X), !, terms(Xs).
 terms([]) --> [].
@@ -357,7 +357,7 @@ logic([symbol(logic),X|Xs]) --> lpar, symbol(symbol(logic)), symbol(X), logic_at
 % Scripts are sequences of commands. In line with the LISP-like syntax, all commands look
 % like LISP-function applications, with a command name applied to zero or more arguments.
 command([reserved('set-logic'),X]) --> lpar, reserved_word(reserved('set-logic')), symbol(X), rpar.
-command([reserved('set-option'),X]) --> lpar, reserved_word(reserved('set-option')), option(X), rpar.
+command([reserved('set-option')|X]) --> lpar, reserved_word(reserved('set-option')), option(X), rpar.
 command([reserved('set-info'),X]) --> lpar, reserved_word(reserved('set-info')), attribute(X), rpar.
 command([reserved('declare-sort'),X,Y]) --> lpar, reserved_word(reserved('declare-sort')), symbol(X), numeral(Y), rpar.
 command([reserved('define-sort'),X,Y,Z]) --> lpar, reserved_word(reserved('define-sort')), symbol(X), lpar, symbols(Y), rpar, sort(Z), rpar.
@@ -384,7 +384,7 @@ option([keyword(X),Y]) --> keyword(keyword(X)), {member(X,['print-success','expa
 option([keyword('diagnostic-output-channel'),X]) --> keyword(keyword('diagnostic-output-channel')), string(X).
 option([keyword('random-seed'),X]) --> keyword(keyword('random-seed')), numeral(X).
 option([keyword('verbosity'),X]) --> keyword(keyword('verbosity')), numeral(X).
-option(X) --> attribute(X).
+option([X]) --> attribute(X).
 
 % The command get-info takes as argument expressions of the syntactic category <info_flag>
 % which are flags with the same form as keywords. The predefined flags below have a prescribed
