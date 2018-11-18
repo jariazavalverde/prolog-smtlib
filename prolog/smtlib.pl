@@ -63,6 +63,9 @@ rpar --> [')'], whitespaces.
 % A <numeral> is the digit 0 or a non-empty sequence of digits not starting with 0.
 numeral(numeral(Y)) --> digits([X|Xs]), {(Xs = [] ; X \= '0'), number_chars(Y, [X|Xs])}, whitespaces.
 
+numerals([X|Xs]) --> numeral(X), !, numerals(Xs).
+numerals([]) --> [].
+
 digits([X|Xs]) --> [X], {char_code(X, C), C >= 48, C =< 57}, !, digits(Xs).
 digits([]) --> [].
 
@@ -126,6 +129,9 @@ reserved_word(reserved(Y)) -->
 symbol(X) --> simple_symbol(X).
 symbol(X) --> quoted_symbol(X).
 
+symbols([X|Xs]) --> symbol(X), !, symbols(Xs).
+symbols([]) --> [].
+
 simple_symbol(symbol(Y)) -->
     symbol_chars([X|Xs]),
     {\+member(X, ['0','1','2','3','4','5','6','7','8','9']),
@@ -178,11 +184,8 @@ s_exprs([]) --> [].
 
 % Indexed identifiers are defined more systematically as the application of the reserved
 % word _ to a symbol and one or more indices, given by numerals.
-identifier(identifier(Xs)) --> lpar, ['_'], whitespaces, numerals(Xs), {Xs \= []}, rpar.
-identifier(identifier(X)) --> symbol(X).
-
-numerals([X|Xs]) --> numeral(X), !, numerals(Xs).
-numerals([]) --> [].
+identifier([reserved('_')|Xs]) --> lpar, ['_'], whitespaces, numerals(Xs), {Xs \= []}, rpar.
+identifier(X) --> symbol(X).
 
 
 
@@ -195,8 +198,8 @@ attribute_value(X) --> spec_constant(X), !.
 attribute_value(X) --> symbol(X), !.
 attribute_value(Xs) --> lpar, s_exprs(Xs), rpar.
 
-attribute(attr(X,Xs)) --> keyword(X), attribute_value(Xs), !.
-attribute(attr(X)) --> keyword(X).
+attribute([X,Xs]) --> keyword(X), attribute_value(Xs), !.
+attribute(X) --> keyword(X).
 
 attributes([X|Xs]) --> attribute(X), !, attributes(Xs).
 attributes([]) --> [].
@@ -207,8 +210,8 @@ attributes([]) --> [].
 % A sort symbol can be either the distinguished symbol Bool or any <identifier>. A sort
 % parameter can be any <symbol> (which in turn, is an <identifier>).
 
-sort(sort(X, Xs)) --> lpar, identifier(X), sorts(Xs), {Xs \= []}, rpar.
-sort(sort(X, [])) --> identifier(X).
+sort([X|Xs]) --> lpar, identifier(X), sorts(Xs), {Xs \= []}, rpar.
+sort(X) --> identifier(X).
 
 sorts([X|Xs]) --> sort(X), sorts(Xs).
 sorts([]) --> [].
@@ -222,23 +225,23 @@ sorts([]) --> [].
 % variables, function symbols, three kinds of binders--the reserved words let, forall and
 % exists--and an annotation operator--the reserved word !.
 
-qual_identifier(qualified(X)) --> identifier(X).
-qual_identifier(qualified(X,Y)) --> lpar, [a,s], whitespaces, identifier(X), sort(Y), rpar.
+qual_identifier(X) --> identifier(X).
+qual_identifier([reserved(as),X,Y]) --> lpar, [a,s], whitespaces, identifier(X), sort(Y), rpar.
 
-var_binding(binding(X,Y)) --> lpar, symbol(X), term(Y), rpar.
+var_binding([X,Y]) --> lpar, symbol(X), term(Y), rpar.
 var_bindings([X|Xs]) --> var_binding(X), !, var_bindings(Xs).
 var_bindings([]) --> [].
 
-sorted_var(var(X,Y)) --> lpar, symbol(X), sort(Y), rpar.
+sorted_var([X,Y]) --> lpar, symbol(X), sort(Y), rpar.
 sorted_vars([X|Xs]) --> sorted_var(X), !, sorted_vars(Xs).
 sorted_vars([]) --> [].
 
-term(term(X)) --> spec_constant(X).
-term(term(X)) --> qual_identifier(X).
-term(term(X,Xs)) --> lpar, qual_identifier(X), terms(Xs), {Xs \= []}, rpar.
-term(term(reserved(let), Xs, X)) --> lpar, reserved_word(reserved(let)), lpar, var_bindings(Xs), {Xs \= []}, rpar, term(X), rpar.
-term(term(reserved(Y), Xs, X)) --> lpar, reserved_word(reserved(Y)), {member(Y, [forall, exists])}, lpar, sorted_vars(Xs), {Xs \= []}, rpar, term(X), rpar.
-term(term(reserved('!'), Xs)) --> lpar, reserved_word(reserved('!')), attributes(Xs), {Xs \= []}, rpar.
+term(X) --> spec_constant(X).
+term(X) --> qual_identifier(X).
+term([X|Xs]) --> lpar, qual_identifier(X), terms(Xs), {Xs \= []}, rpar.
+term([reserved(let), Xs, X]) --> lpar, reserved_word(reserved(let)), lpar, var_bindings(Xs), {Xs \= []}, rpar, term(X), rpar.
+term([reserved(Y), Xs, X]) --> lpar, reserved_word(reserved(Y)), {member(Y, [forall, exists])}, lpar, sorted_vars(Xs), {Xs \= []}, rpar, term(X), rpar.
+term([reserved('!')|Xs]) --> lpar, reserved_word(reserved('!')), attributes(Xs), {Xs \= []}, rpar.
 
 terms([X|Xs]) --> term(X), !, terms(Xs).
 terms([]) --> [].
@@ -253,4 +256,37 @@ terms([]) --> [].
 % :funs, :funs-description, :notes, :sorts, :sorts-description, and :values. Additionally, a
 % theory declaration can contain any number of user-defined attributes.
 
-sort_symbol_decl(sort_symbol_decl(X,Y,Z)) --> lpar, identifier(X), numeral(Y), attributes(Z), rpar.
+sort_symbol_decl([X,Y,Z]) --> lpar, identifier(X), numeral(Y), attributes(Z), rpar.
+sort_symbol_decls([X|Xs]) --> sort_symbol_decl(X), !, sort_symbol_decls(Xs).
+sort_symbol_decls([]) --> [].
+
+meta_spec_constant(reserved(X)) --> reserved_word(reserved(X)), {member(X, ['NUMERAL','DECIMAL','STRING'])}.
+
+fun_symbol_decl([X,Y|Z]) --> lpar, spec_constant(X), sort(Y), attributes(Z), rpar.
+fun_symbol_decl([X,Y|Z]) --> lpar, meta_spec_constant(X), sort(Y), attributes(Z), rpar.
+fun_symbol_decl([X|YZ]) --> lpar, identifier(X), sorts(Y), {Y \= []}, attributes(Z), rpar, {append(Y, Z, YZ)}.
+
+par_fun_symbol_decl(X) --> sort_symbol_decl(X).
+par_fun_symbol_decl([reserved(par), X, [Y|ZW]]) -->
+    lpar, reserved_word(reserved(par)),
+    lpar, symbols(X), {X \= []}, rpar,
+    lpar, identifier(Y), sorts(Z), {Z \= []},
+    attributes(W), rpar,
+    rpar, {append(Z, W, ZW)}.
+
+par_fun_symbol_decls([X|Xs]) --> par_fun_symbol_decl(X), !, par_fun_symbol_decls(Xs).
+par_fun_symbol_decls([]) --> [].
+
+theory_attribute([keyword(sorts),Xs]) -->  keyword(keyword(sorts)), lpar, sort_symbol_decls(Xs), {Xs \= []}, rpar, !.
+theory_attribute([keyword(sorts),Xs]) -->  keyword(keyword(funs)), lpar, par_fun_symbol_decls(Xs), {Xs \= []}, rpar, !.
+theory_attribute([keyword('sorts-description'),X]) -->  keyword(keyword('sorts-description')), string(X), !.
+theory_attribute([keyword('funs-description'),X]) -->  keyword(keyword('funs-description')), string(X), !.
+theory_attribute([keyword(definition),X]) -->  keyword(keyword(definition)), string(X), !.
+theory_attribute([keyword(values),X]) -->  keyword(keyword(values)), string(X), !.
+theory_attribute([keyword(notes),X]) -->  keyword(keyword(notes)), string(X), !.
+theory_attribute(X) -->  attribute(X), !.
+
+theory_attributes([X|Xs]) --> theory_attribute(X), !, theory_attributes(Xs).
+theory_attributes([]) --> [].
+
+theory_decl([symbol(theory),X|Y]) --> lpar, symbol(symbol(theory)), symbol(X), theory_attributes(Y), {Y \= []}, rpar.
