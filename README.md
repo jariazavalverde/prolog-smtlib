@@ -29,26 +29,56 @@ SMT-LIB is an international initiative aimed at facilitating research and develo
 - **smtlib_read_expression/2** - reads SMT-LIB expression from file.
 - **smtlib_parse_expression/2** - parses SMT-LIB expression from chars.
 
-### Read SMT-LIB scripts
+### Reading SMT-LIB scripts
 
 ```pl
 ?- smtlib_read_script('../sample/script/figure-3.4.smt', X).
 X = [
-  [reserved(set-logic),symbol(QF_LIA)],
-  [reserved(declare-fun),symbol(w),[],symbol(Int)],
-  [reserved(declare-fun),symbol(x),[],symbol(Int)],
-  [reserved(declare-fun),symbol(y),[],symbol(Int)],
-  [reserved(declare-fun),symbol(z),[],symbol(Int)],
+  [reserved('set-logic'),symbol('QF_LIA')],
+  [reserved('declare-fun'),symbol(w),[],symbol('Int')],
+  [reserved('declare-fun'),symbol(x),[],symbol('Int')],
+  [reserved('declare-fun'),symbol(y),[],symbol('Int')],
+  [reserved('declare-fun'),symbol(z),[],symbol('Int')],
   [reserved(assert),[symbol(>),symbol(x),symbol(y)]],
   [reserved(assert),[symbol(>),symbol(y),symbol(z)]],
-  [reserved(set-option),[keyword(print-success),symbol(false)]],
+  [reserved('set-option'),[keyword('print-success'),symbol(false)]],
   [reserved(push),numeral(1)],
   [reserved(assert),[symbol(>),symbol(z),symbol(x)]],
-  [reserved(check-sat)],
-  [reserved(get-info),keyword(all-statistics)],
+  [reserved('check-sat')],
+  [reserved('get-info'),keyword('all-statistics')],
   [reserved(pop),numeral(1)],
   [reserved(push),numeral(1)],
-  [reserved(check-sat)],
+  [reserved('check-sat')],
   [reserved(exit)]
+].
+```
+
+### Reading SMT-LIB theory declarations
+
+```pl
+?- smtlib_read_theory('../sample/theory/core.smt', X).
+X = [
+  symbol(theory),symbol('Core'),
+  [keyword('smt-lib-version'),decimal(2.6)],
+  [keyword('smt-lib-release'),string('2017-11-24')],
+  [keyword('written-by'),string(...)],
+  [keyword(date),string(...)],
+  [keyword(last-updated),string(...)],
+  [keyword(update-history),string(...)],
+  [keyword(sorts),[[symbol('Bool'),numeral(0),[]]]],
+  [keyword(funs),[
+    [symbol(true),symbol('Bool')],
+    [symbol(false),symbol('Bool')],
+    [symbol(not),symbol('Bool'),symbol('Bool')],
+    [symbol(=>),symbol('Bool'),symbol('Bool'),symbol('Bool'),keyword('right-assoc')],     
+    [symbol(and),symbol('Bool'),symbol('Bool'),symbol('Bool'),keyword('left-assoc')],
+    [symbol(or),symbol('Bool'),symbol('Bool'),symbol('Bool'),keyword('left-assoc')],
+    [symbol(xor),symbol('Bool'),symbol('Bool'),symbol('Bool'),keyword('left-assoc')],
+    [reserved(par),[symbol('A')],[symbol(=),symbol('A'),symbol('A'),symbol('Bool'),keyword(chainable)]],
+    [reserved(par),[symbol('A')],[symbol(distinct),symbol('A'),symbol('A'),symbol('Bool'),keyword(pairwise)]],
+    [reserved(par),[symbol('A')],[symbol(ite),symbol('Bool'),symbol('A'),symbol('A'),symbol('A')]]]
+  ],
+  [keyword(definition),string(...)],
+  [keyword(values),string(...)]
 ].
 ```
