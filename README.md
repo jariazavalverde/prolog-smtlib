@@ -9,7 +9,7 @@ SMT-LIB is an international initiative aimed at facilitating research and develo
 
 ## Installation
 
-### SWI-Prolog
+#### SWI-Prolog
 ```pl
 ?- pack_install(smtlib).
 ```
@@ -29,7 +29,9 @@ SMT-LIB is an international initiative aimed at facilitating research and develo
 - **smtlib_parse_logic/2** - parses SMT-LIB logic declaration from chars.
 - **smtlib_parse_expression/2** - parses SMT-LIB expression from chars.
 
-### Reading SMT-LIB scripts
+## Examples
+
+#### Reading SMT-LIB scripts
 
 ```pl
 ?- smtlib_read_script('../sample/script/figure-3.4.smt', X).
@@ -53,7 +55,7 @@ X = [
 ].
 ```
 
-### Reading SMT-LIB theory declarations
+#### Reading SMT-LIB theory declarations
 
 ```pl
 ?- smtlib_read_theory('../sample/theory/core.smt', X).
@@ -65,7 +67,7 @@ X = [
   [keyword('written-by'),string(...)],
   [keyword(date),string(...)],
   [keyword('last-updated'),string(...)],
-  [keyword(update-history),string(...)],
+  [keyword('update-history'),string(...)],
   [keyword(sorts),[
     [symbol('Bool'),numeral(0),[]]
   ]],
@@ -86,7 +88,7 @@ X = [
 ].
 ```
 
-### Reading SMT-LIB logic declarations
+#### Reading SMT-LIB logic declarations
 
 ```pl
 ?- smtlib_read_logic('../sample/logic/LIA.smt', X).
@@ -104,3 +106,11 @@ X = [
 ].
 
 ```
+
+## License
+
+Source code is released under the terms of the [BSD 3-Clause License](LICENSE).
+
+## References
+
+1. Barrett, Clark, Aaron Stump, and Cesare Tinelli. "The smt-lib standard: Version 2.0." Proceedings of the 8th International Workshop on Satisfiability Modulo Theories (Edinburgh, England). Vol. 13. 2010. [View online](http://smtlib.cs.uiowa.edu/papers/smt-lib-reference-v2.0-r12.09.09.pdf)
