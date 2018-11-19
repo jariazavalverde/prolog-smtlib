@@ -58,14 +58,17 @@ X = [
 ```pl
 ?- smtlib_read_theory('../sample/theory/core.smt', X).
 X = [
-  symbol(theory),symbol('Core'),
+  symbol(theory),
+  symbol('Core'),
   [keyword('smt-lib-version'),decimal(2.6)],
   [keyword('smt-lib-release'),string('2017-11-24')],
   [keyword('written-by'),string(...)],
   [keyword(date),string(...)],
   [keyword(last-updated),string(...)],
   [keyword(update-history),string(...)],
-  [keyword(sorts),[[symbol('Bool'),numeral(0),[]]]],
+  [keyword(sorts),[
+    [symbol('Bool'),numeral(0),[]]
+  ]],
   [keyword(funs),[
     [symbol(true),symbol('Bool')],
     [symbol(false),symbol('Bool')],
@@ -76,9 +79,28 @@ X = [
     [symbol(xor),symbol('Bool'),symbol('Bool'),symbol('Bool'),keyword('left-assoc')],
     [reserved(par),[symbol('A')],[symbol(=),symbol('A'),symbol('A'),symbol('Bool'),keyword(chainable)]],
     [reserved(par),[symbol('A')],[symbol(distinct),symbol('A'),symbol('A'),symbol('Bool'),keyword(pairwise)]],
-    [reserved(par),[symbol('A')],[symbol(ite),symbol('Bool'),symbol('A'),symbol('A'),symbol('A')]]]
-  ],
+    [reserved(par),[symbol('A')],[symbol(ite),symbol('Bool'),symbol('A'),symbol('A'),symbol('A')]]
+  ]],
   [keyword(definition),string(...)],
   [keyword(values),string(...)]
 ].
+```
+
+### Reading SMT-LIB logic declarations
+
+```pl
+?- smtlib_read_logic('../sample/logic/LIA.smt', X).
+X = [
+  symbol(logic),
+  symbol('LIA'),
+  [keyword('smt-lib-version'),decimal(2.6)],
+  [keyword('smt-lib-release'),string('2017-11-24')],
+  [keyword('written-by'),string(...)],
+  [keyword(date),string(...)],
+  [keyword('update-history'),string(...)],
+  [keyword(theories),[symbol('Ints')]],
+  [keyword(language),string(...)],
+  [keyword(extensions),string(...)]
+].
+
 ```
