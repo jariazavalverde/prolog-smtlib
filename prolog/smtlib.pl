@@ -4,16 +4,22 @@
   * DESCRIPTION: This module contains predicates for parsing SMT-LIB programs.
   * AUTHORS: José Antonio Riaza Valverde <riaza.valverde@gmail.com>
   * GITHUB: https://github.com/jariazavalverde/prolog-smtlib
-  * UPDATED: 18.11.2018
+  * UPDATED: 19.11.2018
   * 
   **/
 
 
 
 :- module(smtlib, [
+    % from file
     smtlib_read_expression/2,
+    smtlib_read_theory/2,
+    smtlib_read_logic/2,
     smtlib_read_script/2,
+    % from chars
     smtlib_parse_expression/2,
+    smtlib_parse_theory/2,
+    smtlib_parse_logic/2,
     smtlib_parse_script/2
 ]).
 
@@ -38,18 +44,42 @@
 %
 % This predicate succeeds when file +Path exists and ?Expression
 % is the expression resulting from parsing the file as an
-% S-Expression of SMT-LIM.
+% S-Expression of SMT-LIB.
 smtlib_read_expression(Path, Expression) :-
     open(Path, read, Stream),
     stream_to_list(Stream, Chars),
     close(Stream),
     smtlib_parse_expression(Chars, Expression).
 
+% smtlib_read_theory/2
+% smtlib_read_theory(+Path, ?Theory)
+%
+% This predicate succeeds when file +Path exists and ?Theory
+% is the expression resulting from parsing the file as an
+% SMT-LIB theory declaration.
+smtlib_read_theory(Path, Theory) :-
+    open(Path, read, Stream),
+    stream_to_list(Stream, Chars),
+    close(Stream),
+    smtlib_parse_theory(Chars, Theory).
+
+% smtlib_read_logic/2
+% smtlib_read_logic(+Path, ?Logic)
+%
+% This predicate succeeds when file +Path exists and ?Theory
+% is the expression resulting from parsing the file as an
+% SMT-LIB logic declaration.
+smtlib_read_logic(Path, Logic) :-
+    open(Path, read, Stream),
+    stream_to_list(Stream, Chars),
+    close(Stream),
+    smtlib_parse_logic(Chars, Logic).
+
 % smtlib_read_script/2
 % smtlib_read_script(+Chars, ?Script)
 %
 % This predicate succeeds when file +Path exists and ?Script is
-% the script resulting from parsing +Chars as an SMT-LIM script.
+% the script resulting from parsing +Chars as an SMT-LIB script.
 smtlib_read_script(Path, Script) :-
     open(Path, read, Stream),
     stream_to_list(Stream, Chars),
@@ -61,14 +91,30 @@ smtlib_read_script(Path, Script) :-
 %
 % This predicate succeeds when +Chars is a list of characters and
 % ?Expression is the expression resulting from parsing +Chars as an
-% S-Expression of SMT-LIM.
+% S-Expression of SMT-LIB.
 smtlib_parse_expression(Chars, Expression) :- s_expr(Expression, Chars, []).
+
+% smtlib_parse_theory/2
+% smtlib_parse_theory(+Chars, ?Theory)
+%
+% This predicate succeeds when +Chars is a list of characters and
+% ?Theory is the expression resulting from parsing +Chars as an
+% SMT-LIB theory declaration.
+smtlib_parse_theory(Chars, Theory) :- theory_decl(Theory, Chars, []).
+
+% smtlib_parse_logic/2
+% smtlib_parse_logic(+Chars, ?Logic)
+%
+% This predicate succeeds when +Chars is a list of characters and
+% ?Logic is the expression resulting from parsing +Chars as an
+% SMT-LIB logic declaration.
+smtlib_parse_logic(Chars, Logic) :- logic(Logic, Chars, []).
 
 % smtlib_parse_script/2
 % smtlib_parse_script(+Chars, ?Script)
 %
 % This predicate succeeds when +Chars is a list of characters and
-% ?Script is the script resulting from parsing +Chars as an SMT-LIM script.
+% ?Script is the script resulting from parsing +Chars as an SMT-LIB script.
 smtlib_parse_script(Chars, Script) :- script(Script, Chars, []).
 
 
@@ -314,7 +360,7 @@ fun_symbol_decl([X,Y|Z]) --> lpar, spec_constant(X), sort(Y), attributes(Z), rpa
 fun_symbol_decl([X,Y|Z]) --> lpar, meta_spec_constant(X), sort(Y), attributes(Z), rpar.
 fun_symbol_decl([X|YZ]) --> lpar, identifier(X), sorts(Y), {Y \= []}, attributes(Z), rpar, {append(Y, Z, YZ)}.
 
-par_fun_symbol_decl(X) --> sort_symbol_decl(X).
+par_fun_symbol_decl(X) --> fun_symbol_decl(X).
 par_fun_symbol_decl([reserved(par), X, [Y|ZW]]) -->
     lpar, reserved_word(reserved(par)),
     lpar, symbols(X), {X \= []}, rpar,
@@ -326,14 +372,14 @@ par_fun_symbol_decls([X|Xs]) --> par_fun_symbol_decl(X), !, par_fun_symbol_decls
 par_fun_symbol_decls([]) --> [].
 
 theory_attribute([keyword(sorts),Xs]) -->  keyword(keyword(sorts)), lpar, sort_symbol_decls(Xs), {Xs \= []}, rpar, !.
-theory_attribute([keyword(sorts),Xs]) -->  keyword(keyword(funs)), lpar, par_fun_symbol_decls(Xs), {Xs \= []}, rpar, !.
+theory_attribute([keyword(funs),Xs]) -->  keyword(keyword(funs)), lpar, par_fun_symbol_decls(Xs), {Xs \= []}, rpar, !.
 theory_attribute([keyword(X),Y]) -->  keyword(keyword(X)), {member(X,['sorts-description','funs-description',definition,values,notes])}, string(Y), !.
 theory_attribute(X) -->  attribute(X), !.
 
 theory_attributes([X|Xs]) --> theory_attribute(X), !, theory_attributes(Xs).
 theory_attributes([]) --> [].
 
-theory_decl([symbol(theory),X|Y]) --> lpar, symbol(symbol(theory)), symbol(X), theory_attributes(Y), {Y \= []}, rpar.
+theory_decl([symbol(theory),X|Y]) --> whitespaces, lpar, symbol(symbol(theory)), symbol(X), theory_attributes(Y), {Y \= []}, rpar.
 
 
 
@@ -349,7 +395,8 @@ logic_attribute(X) --> attribute(X).
 logic_attributes([X|Xs]) --> logic_attribute(X), !, logic_attributes(Xs).
 logic_attributes([]) --> [].
 
-logic([symbol(logic),X|Xs]) --> lpar, symbol(symbol(logic)), symbol(X), logic_attributes(Xs), {Xs \= []}, rpar.
+logic(X) --> whitespaces, logic2(X).
+logic2([symbol(logic),X|Xs]) --> lpar, symbol(symbol(logic)), symbol(X), logic_attributes(Xs), {Xs \= []}, rpar.
 
 
 
