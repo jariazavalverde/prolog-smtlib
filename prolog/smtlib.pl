@@ -103,7 +103,8 @@ comment --> [].
 whitespace --> [' '].
 whitespace --> ['\t'].
 whitespace --> ['\n'].
-whitespace --> [';'], comment, ['\n'].
+whitespace --> [';'], comment, ['\n'], !.
+whitespace([';'|Xs],[]) :- comment(Xs,[]).
 
 whitespaces --> whitespace, !, whitespaces.
 whitespaces --> [].
