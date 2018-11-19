@@ -395,8 +395,7 @@ logic_attribute(X) --> attribute(X).
 logic_attributes([X|Xs]) --> logic_attribute(X), !, logic_attributes(Xs).
 logic_attributes([]) --> [].
 
-logic(X) --> whitespaces, logic2(X).
-logic2([symbol(logic),X|Xs]) --> lpar, symbol(symbol(logic)), symbol(X), logic_attributes(Xs), {Xs \= []}, rpar.
+logic([symbol(logic),X|Xs]) --> whitespaces, lpar, symbol(symbol(logic)), symbol(X), logic_attributes(Xs), {Xs \= []}, rpar.
 
 
 

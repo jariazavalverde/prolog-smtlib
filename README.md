@@ -20,13 +20,13 @@ SMT-LIB is an international initiative aimed at facilitating research and develo
 :- use_module(smtlib).
 ```
 
-- **smtlib_read_script/2** - reads SMT-LIB script from file.
+- **smtlib_read_script/2** - parses SMT-LIB script from file.
+- **smtlib_read_theory/2** - parses SMT-LIB theory declaration from file.
+- **smtlib_read_logic/2** - parses SMT-LIB logic declaration from file.
+- **smtlib_read_expression/2** - parses SMT-LIB expression from file.
 - **smtlib_parse_script/2** - parses SMT-LIB script from chars.
-- **smtlib_read_theory/2** - reads SMT-LIB theory declaration from file.
 - **smtlib_parse_theory/2** - parses SMT-LIB theory declaration from chars.
-- **smtlib_read_logic/2** - reads SMT-LIB logic declaration from file.
 - **smtlib_parse_logic/2** - parses SMT-LIB logic declaration from chars.
-- **smtlib_read_expression/2** - reads SMT-LIB expression from file.
 - **smtlib_parse_expression/2** - parses SMT-LIB expression from chars.
 
 ### Reading SMT-LIB scripts
@@ -64,7 +64,7 @@ X = [
   [keyword('smt-lib-release'),string('2017-11-24')],
   [keyword('written-by'),string(...)],
   [keyword(date),string(...)],
-  [keyword(last-updated),string(...)],
+  [keyword('last-updated'),string(...)],
   [keyword(update-history),string(...)],
   [keyword(sorts),[
     [symbol('Bool'),numeral(0),[]]
