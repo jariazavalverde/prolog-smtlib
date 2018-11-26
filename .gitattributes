@@ -1,1 +1,2 @@
 *.pl linguist-language=Prolog
+*.smt linguist-language=SMT
