@@ -11,7 +11,7 @@ SMT-LIB is an international initiative aimed at facilitating research and develo
 
 #### SWI-Prolog
 ```pl
-?- pack_install('http://jariaza.es/swipl/smtlib/smtlib-0.0.1.tgz').
+?- pack_install(smtlib).
 ```
 
 ## Usage
