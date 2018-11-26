@@ -200,7 +200,7 @@ binary_digits([]) --> [].
 % the backslash character to end a string literal.
 string(string(Y)) --> ['"'], quoted(X), ['"'], {atom_chars(Y, X)}, whitespaces.
 
-quoted([X|Xs]) --> printable_character(X), !, quoted(Xs).
+quoted([X|Xs]) --> printable_character(X), {X \= '"'}, !, quoted(Xs).
 quoted([X|Xs]) --> [X], {member(X, [' ','\n','\r','\t'])}, !, quoted(Xs).
 quoted(['"'|Xs]) --> ['"','"'], !, quoted(Xs).
 quoted([]) --> [].
@@ -254,8 +254,8 @@ symbol_chars([]) --> [].
 
 quoted_symbol(symbol(Y)) --> ['|'], quoted_symbol_chars(X), ['|'], {atom_chars(Y, X)}, whitespaces.
 
-quoted_symbol_chars([X|Xs]) --> printable_character(X), !, {X \= '|', X \= '\\'}, quoted_symbol_chars(Xs).
-quoted_symbol_chars([X|Xs]) --> [X], {member(X, [' ','\n','\r','\t'])}, quoted_symbol_chars(Xs).
+quoted_symbol_chars([X|Xs]) --> printable_character(X), {X \= '|', X \= '\\'}, !, quoted_symbol_chars(Xs).
+quoted_symbol_chars([X|Xs]) --> [X], {member(X, [' ','\n','\r','\t'])}, !, quoted_symbol_chars(Xs).
 quoted_symbol_chars([]) --> [].
 
 % A <keyword> is a non-empty sequence of letters, digits, and the characters
