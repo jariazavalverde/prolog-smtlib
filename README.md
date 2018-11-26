@@ -11,13 +11,13 @@ SMT-LIB is an international initiative aimed at facilitating research and develo
 
 ### SWI-Prolog
 ```pl
-?- pack_install(smtlib).
+?- pack_install('http://jariaza.es/swipl/smtlib/smtlib-0.0.1.tgz').
 ```
 
 ## Usage
 
 ```pl
-:- use_module(smtlib).
+:- use_module(library(smtlib)).
 ```
 
 - **smtlib_read_script/2** - parses SMT-LIB script from file.
@@ -65,7 +65,7 @@ X = [
   [keyword('written-by'),string(...)],
   [keyword(date),string(...)],
   [keyword('last-updated'),string(...)],
-  [keyword(update-history),string(...)],
+  [keyword('update-history'),string(...)],
   [keyword(sorts),[
     [symbol('Bool'),numeral(0),[]]
   ]],
@@ -73,7 +73,7 @@ X = [
     [symbol(true),symbol('Bool')],
     [symbol(false),symbol('Bool')],
     [symbol(not),symbol('Bool'),symbol('Bool')],
-    [symbol(=>),symbol('Bool'),symbol('Bool'),symbol('Bool'),keyword('right-assoc')],     
+    [symbol(=>),symbol('Bool'),symbol('Bool'),symbol('Bool'),keyword('right-assoc')],
     [symbol(and),symbol('Bool'),symbol('Bool'),symbol('Bool'),keyword('left-assoc')],
     [symbol(or),symbol('Bool'),symbol('Bool'),symbol('Bool'),keyword('left-assoc')],
     [symbol(xor),symbol('Bool'),symbol('Bool'),symbol('Bool'),keyword('left-assoc')],
