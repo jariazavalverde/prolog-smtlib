@@ -4,7 +4,7 @@
   * DESCRIPTION: This module contains predicates for parsing SMT-LIB programs.
   * AUTHORS: José Antonio Riaza Valverde <riaza.valverde@gmail.com>
   * GITHUB: https://github.com/jariazavalverde/prolog-smtlib
-  * UPDATED: 19.11.2018
+  * UPDATED: 26.11.2018
   * 
   **/
 
@@ -32,6 +32,7 @@
   * Vol. 13. 2010.
   * 
   * http://smtlib.cs.uiowa.edu/papers/smt-lib-reference-v2.0-r12.09.09.pdf
+  * http://smtlib.cs.uiowa.edu/papers/smt-lib-reference-v2.6-r2017-07-18.pdf
   * 
   **/
 
@@ -149,6 +150,7 @@ comment --> [].
 whitespace --> [' '].
 whitespace --> ['\t'].
 whitespace --> ['\n'].
+whitespace --> ['\r'].
 whitespace --> [';'], comment, ['\n'], !.
 whitespace([';'|Xs],[]) :- comment(Xs,[]).
 
@@ -198,19 +200,24 @@ binary_digits([]) --> [].
 % the backslash character to end a string literal.
 string(string(Y)) --> ['"'], quoted(X), ['"'], {atom_chars(Y, X)}, whitespaces.
 
-quoted([X|Xs]) --> [X], {X \= '\\', X \= '"'}, !, quoted(Xs).
-quoted(['"'|Xs]) --> ['\\','"'], !, quoted(Xs).
-quoted(['\\'|Xs]) --> ['\\','\\'], !, quoted(Xs).
+quoted([X|Xs]) --> printable_character(X), !, quoted(Xs).
+quoted([X|Xs]) --> [X], {member(X, [' ','\n','\r','\t'])}, !, quoted(Xs).
+quoted(['"'|Xs]) --> ['"','"'], !, quoted(Xs).
 quoted([]) --> [].
+
+printable_character(X) --> [X], {char_code(X, C), (C >= 32, C =< 126 ; C >= 128)}.
 
 % The language uses a number of reserved words, sequences of (non-whitespace) characters
 % that are to be treated as individual tokens. Additionally, each command name in the
 % scripting language is also a reserved word.
 reserved_word(X) :- member(X, [
-    par, 'NUMERAL', 'DECIMAL', 'STRING', '_', '!', as, let, forall, exists,
-    'set-logic', 'set-option', 'set-info', 'declare-sort', 'define-sort',
-    'declare-fun', push, pop, assert, 'check-sat', 'get-assertions',
-    'get-proof', 'get-unsat-core', 'get-value', 'get-assignment', 'get-info', exit
+    par, 'BINARY', 'HEXADECIMAL', 'NUMERAL', 'DECIMAL', 'STRING', '_', '!', as,
+    let, forall, exists, match, 'set-logic', 'set-option', 'set-info', 'declare-sort',
+    'define-sort', 'declare-fun', push, pop, assert, 'check-sat', 'get-assertions',
+    'get-proof', 'get-unsat-core', 'get-value', 'get-assignment', 'get-info', exit,
+    'check-sat-assuming', 'declare-const', 'declare-datatype', 'declare-datatypes',
+    'declare-fun-rec', 'declare-funs-rec', echo, 'get-model', 'get-option',
+    'get-unsat-assumptions', reset, 'reset-assertions', 'set-option'
 ]).
 
 reserved_word(reserved(Y)) -->
@@ -247,7 +254,8 @@ symbol_chars([]) --> [].
 
 quoted_symbol(symbol(Y)) --> ['|'], quoted_symbol_chars(X), ['|'], {atom_chars(Y, X)}, whitespaces.
 
-quoted_symbol_chars([X|Xs]) --> [X], {X \= '|', X \= '\\'}, quoted_symbol_chars(Xs).
+quoted_symbol_chars([X|Xs]) --> printable_character(X), !, {X \= '|', X \= '\\'}, quoted_symbol_chars(Xs).
+quoted_symbol_chars([X|Xs]) --> [X], {member(X, [' ','\n','\r','\t'])}, quoted_symbol_chars(Xs).
 quoted_symbol_chars([]) --> [].
 
 % A <keyword> is a non-empty sequence of letters, digits, and the characters
@@ -281,10 +289,15 @@ s_exprs([]) --> [].
 % IDENTIFIERS
 
 % Indexed identifiers are defined more systematically as the application of the reserved
-% word _ to a symbol and one or more indices, given by numerals.
-identifier([reserved('_')|Xs]) --> lpar, ['_'], whitespaces, numerals(Xs), {Xs \= []}, rpar.
+% word _ to a symbol and one or more indices. Indices can be numerals or symbols.
+identifier([reserved('_'),X|Xs]) --> lpar, ['_'], whitespaces, symbol(X), indices(Xs), {Xs \= []}, rpar.
 identifier(X) --> symbol(X).
 
+index(X) --> numeral(X).
+index(X) --> symbol(X).
+
+indices([X|Xs]) --> index(X), !, indices(Xs).
+indices([]) --> [].
 
 
 % ATTRIBUTES
@@ -318,8 +331,8 @@ sorts([]) --> [].
 
 % Well-sorted terms are a subset of the set of all terms. The latter are constructed out of
 % constant symbols in the <spec-constant> category (numerals, rationals, strings, etc.),
-% variables, function symbols, three kinds of binders--the reserved words let, forall and
-% exists--and an annotation operator--the reserved word !.
+% variables, function symbols, three kinds of binders--the reserved words let, forall, match
+% and exists--and an annotation operator--the reserved word !.
 qual_identifier(X) --> identifier(X).
 qual_identifier([reserved(as),X,Y]) --> lpar, [a,s], whitespaces, identifier(X), sort(Y), rpar.
 
@@ -331,11 +344,19 @@ sorted_var([X,Y]) --> lpar, symbol(X), sort(Y), rpar.
 sorted_vars([X|Xs]) --> sorted_var(X), !, sorted_vars(Xs).
 sorted_vars([]) --> [].
 
+pattern([X|Xs]) --> lpar, !, symbol(X), symbols(Xs), {Xs \= []}, rpar.
+pattern(X) --> symbol(X).
+
+match_case([X,Y]) --> lpar, pattern(X), term(Y), rpar.
+match_cases([X|Xs]) --> match_case(X), !, match_cases(Xs).
+match_cases([]) --> [].
+
 term(X) --> spec_constant(X).
 term(X) --> qual_identifier(X).
 term([X|Xs]) --> lpar, qual_identifier(X), terms(Xs), {Xs \= []}, rpar.
 term([reserved(let), Xs, X]) --> lpar, reserved_word(reserved(let)), lpar, var_bindings(Xs), {Xs \= []}, rpar, term(X), rpar.
 term([reserved(Y), Xs, X]) --> lpar, reserved_word(reserved(Y)), {member(Y, [forall, exists])}, lpar, sorted_vars(Xs), {Xs \= []}, rpar, term(X), rpar.
+term([reserved(match), Xs]) --> lpar, reserved_word(reserved(match)), lpar, match_cases(Xs), {Xs \= []}, rpar, rpar.
 term([reserved('!'),X|Xs]) --> lpar, reserved_word(reserved('!')), term(X), attributes(Xs), {Xs \= []}, rpar.
 
 terms([X|Xs]) --> term(X), !, terms(Xs).
@@ -350,7 +371,7 @@ terms([]) --> [].
 % with the following predefined keywords have a prescribed usage and semantics: :definition,
 % :funs, :funs-description, :notes, :sorts, :sorts-description, and :values. Additionally, a
 % theory declaration can contain any number of user-defined attributes.
-sort_symbol_decl([X,Y,Z]) --> lpar, identifier(X), numeral(Y), attributes(Z), rpar.
+sort_symbol_decl([X,Y|Z]) --> lpar, identifier(X), numeral(Y), attributes(Z), rpar.
 sort_symbol_decls([X|Xs]) --> sort_symbol_decl(X), !, sort_symbol_decls(Xs).
 sort_symbol_decls([]) --> [].
 
@@ -403,20 +424,60 @@ logic([symbol(logic),X|Xs]) --> whitespaces, lpar, symbol(symbol(logic)), symbol
 
 % Scripts are sequences of commands. In line with the LISP-like syntax, all commands look
 % like LISP-function applications, with a command name applied to zero or more arguments.
+
+sort_dec([X,Y]) --> lpar, symbol(X), numeral(Y), rpar.
+sort_decs([X|Xs]) --> sort_dec(X), !, sort_decs(Xs).
+sort_decs([]) --> [].
+
+selector_dec([X,Y]) --> lpar, symbol(X), sort(Y), rpar.
+selector_decs([X|Xs]) --> selector_dec(X), !, selector_decs(Xs).
+selector_decs([]) --> [].
+
+constructor_dec([X|Xs]) --> lpar, symbol(X), selector_decs(Xs), rpar.
+constructor_decs([X|Xs]) --> constructor_dec(X), !, constructor_decs(Xs).
+constructor_decs([]) --> [].
+
+datatype_dec(Xs) --> lpar, constructor_decs(Xs), {Xs \= []}, rpar.
+datatype_dec([reserved(par),X,Y]) --> lpar, reserved_word(reserved(par)),
+    lpar, symbols(X), {X \= []}, rpar,
+    lpar, constructor_decs(Y), {Y \= []}, rpar, rpar.
+datatype_decs([X|Xs]) --> datatype_dec(X), !, datatype_decs(Xs).
+datatype_decs([]) --> [].
+
+function_dec([X,Y,Z]) --> lpar, symbol(X), lpar, sorted_vars(Y), rpar, sort(Z), rpar.
+function_decs([X|Xs]) --> function_dec(X), !, function_decs(Xs).
+function_decs([]) --> [].
+
+function_def([X,Y,Z,W]) --> symbol(X), lpar, sorted_vars(Y), rpar, sort(Z), term(W).
+
+prop_literal([symbol(not),X]) --> lpar, symbol(symbol(not)), symbol(X), rpar.
+prop_literal(X) --> symbol(X).
+prop_literals([X|Xs]) --> prop_literal(X), !, prop_literals(Xs).
+prop_literals([]) --> [].
+
+command([reserved('check-sat-assuming'),X]) --> lpar, reserved_word(reserved('check-sat-assuming')), lpar, prop_literals(X), rpar, rpar.
+command([reserved('declare-const'),X,Y]) --> lpar, reserved_word(reserved('declare-const')), symbol(X), sort(Y), rpar.
+command([reserved('declare-datatype'),X,Y]) --> lpar, reserved_word(reserved('declare-datatype')), symbol(X), datatype_dec(Y), rpar.
+command([reserved('declare-datatypes'),X,Y]) --> lpar, reserved_word(reserved('declare-datatypes')),
+    lpar, sort_decs(X), rpar, lpar, datatype_decs(Y), {length(X,Length), length(Y,Length), Length > 0}, rpar, rpar.
 command([reserved('set-logic'),X]) --> lpar, reserved_word(reserved('set-logic')), symbol(X), rpar.
 command([reserved('set-option')|X]) --> lpar, reserved_word(reserved('set-option')), option(X), rpar.
 command([reserved('set-info'),X]) --> lpar, reserved_word(reserved('set-info')), attribute(X), rpar.
 command([reserved('declare-sort'),X,Y]) --> lpar, reserved_word(reserved('declare-sort')), symbol(X), numeral(Y), rpar.
 command([reserved('define-sort'),X,Y,Z]) --> lpar, reserved_word(reserved('define-sort')), symbol(X), lpar, symbols(Y), rpar, sort(Z), rpar.
 command([reserved('declare-fun'),X,Y,Z]) --> lpar, reserved_word(reserved('declare-fun')), symbol(X), lpar, sorts(Y), rpar, sort(Z), rpar.
-command([reserved('define-fun'),X,Y,Z,W]) --> lpar, reserved_word(reserved('define-fun')), symbol(X), lpar, sorted_vars(Y), rpar, sort(Z), term(W), rpar.
+command([reserved('define-fun'),X,Y,Z,W]) --> lpar, reserved_word(reserved('define-fun')), function_def([X,Y,Z,W]), rpar.
+command([reserved('define-fun-rec'),X,Y,Z,W]) --> lpar, reserved_word(reserved('define-fun-rec')), function_def([X,Y,Z,W]), rpar.
+command([reserved('define-funs-rec'),X,Y]) --> lpar, reserved_word(reserved('define-funs-rec')),
+    lpar, function_decs(X), rpar, lpar, terms(Y), {length(X,Length), length(Y,Length), Length > 0}, rpar, rpar.
 command([reserved(push),X]) --> lpar, reserved_word(reserved(push)), numeral(X), rpar.
 command([reserved(pop),X]) --> lpar, reserved_word(reserved(pop)), numeral(X), rpar.
 command([reserved(assert),X]) --> lpar, reserved_word(reserved(assert)), term(X), rpar.
-command([reserved(X)]) --> lpar, reserved_word(reserved(X)), {member(X,['check-sat','get-assertions','get-proof','get-unsat-core','get-assignment',exit])}, rpar.
+command([reserved(X)]) --> lpar, reserved_word(reserved(X)), {member(X,['check-sat','get-model','get-assertions','get-proof','get-unsat-core','get-assignment','get-unsat-assumptions',exit,reset,'reset-assertions'])}, rpar.
 command([reserved('get-value'),Xs]) --> lpar, reserved_word(reserved('get-value')), lpar, terms(Xs), {Xs \= []}, rpar, rpar.
 command([reserved('get-option'),X]) --> lpar, reserved_word(reserved('get-option')), keyword(X), rpar.
 command([reserved('get-info'),X]) --> lpar, reserved_word(reserved('get-info')), info_flag(X), rpar.
+command([reserved(echo),X]) --> lpar, reserved_word(reserved(echo)), string(X), rpar.
 
 script(X) --> whitespaces, script2(X).
 script2([X|Xs]) --> command(X), !, script2(Xs).
@@ -427,14 +488,16 @@ script2([]) --> [].
 % below have a prescribed usage and semantics.
 b_value(symbol(X)) --> symbol(symbol(X)), {member(X, [true,false])}.
 
-option([keyword(X),Y]) --> keyword(keyword(X)), {member(X,['print-success','expand-definitions','interactive-mode','produce-proofs','produce-unsat-cores','produce-models','produce-assignments','regular-output-channel'])}, b_value(Y).
+option([keyword(X),Y]) --> keyword(keyword(X)), {member(X,['global-declarations','print-success','interactive-mode','produce-proofs','produce-unsat-cores','produce-models','produce-assignments','produce-assertions','produce-unsat-assumptions'])}, b_value(Y).
 option([keyword('diagnostic-output-channel'),X]) --> keyword(keyword('diagnostic-output-channel')), string(X).
 option([keyword('random-seed'),X]) --> keyword(keyword('random-seed')), numeral(X).
 option([keyword('verbosity'),X]) --> keyword(keyword('verbosity')), numeral(X).
+option([keyword('reproducible-resource-limit'),X]) --> keyword(keyword('reproducible-resource-limit')), numeral(X).
+option([keyword('regular-output-channel'),X]) --> keyword(keyword('regular-output-channel')), string(X).
 option([X]) --> attribute(X).
 
 % The command get-info takes as argument expressions of the syntactic category <info_flag>
 % which are flags with the same form as keywords. The predefined flags below have a prescribed
 % usage and semantics.
-info_flag(keyword(X)) --> keyword(keyword(X)), {member(X,['error-behavior',name,authors,version,status,'reason-unknown','all-statistics'])}, !.
+info_flag(keyword(X)) --> keyword(keyword(X)), {member(X,['error-behavior',name,authors,version,'reason-unknown','all-statistics','assertion-stack-lavels'])}, !.
 info_flag(X) --> keyword(X).
