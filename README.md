@@ -7,9 +7,8 @@ SMT-LIB is an international initiative aimed at facilitating research and develo
 - a language for specifying logics, suitably restricted classes of formulas to be checked for satisfiability with respect to a specific background theory;
 - a command language for interacting with SMT solvers via a textual interface that allows asserting and retracting formulas, querying about their satisfiability, examining their models or their unsatisfiability proofs, and so on.
 
-## Installation
+## Installation (SWI-Prolog)
 
-#### SWI-Prolog
 ```pl
 ?- pack_install(smtlib).
 ```
@@ -109,8 +108,8 @@ X = [
 
 ## License
 
-Source code is released under the terms of the [BSD 3-Clause License](LICENSE).
+Source code is released under the terms of the [BSD 3-Clause License](https://github.com/jariazavalverde/prolog-smtlib/blob/master/LICENSE).
 
 ## References
 
-1. Barrett, Clark, Aaron Stump, and Cesare Tinelli. "The smt-lib standard: Version 2.0." Proceedings of the 8th International Workshop on Satisfiability Modulo Theories (Edinburgh, England). Vol. 13. 2010. [View online](http://smtlib.cs.uiowa.edu/papers/smt-lib-reference-v2.0-r12.09.09.pdf)
+1. Barrett, C., Fontaine, P. & Tinelli, C. The SMT-LIB Standard: Version 2.6. Department of Computer Science, The University of Iowa (2017). [View online](http://smtlib.cs.uiowa.edu/papers/smt-lib-reference-v2.6-r2017-07-18.pdf)
