@@ -27,6 +27,8 @@ SMT-LIB is an international initiative aimed at facilitating research and develo
 - **smtlib_parse_theory/2** - parses SMT-LIB theory declaration from chars.
 - **smtlib_parse_logic/2** - parses SMT-LIB logic declaration from chars.
 - **smtlib_parse_expression/2** - parses SMT-LIB expression from chars.
+- **smtlib_write_to_stream/2** - writes SMT-LIB expression into stream.
+- **smtlib_write_to_file/2** - writes SMT-LIB expression into file.
 
 ## Examples
 
@@ -34,7 +36,7 @@ SMT-LIB is an international initiative aimed at facilitating research and develo
 
 ```pl
 ?- smtlib_read_script('../sample/script/figure-3.4.smt', X).
-X = [
+X = list([
   [reserved('set-logic'),symbol('QF_LIA')],
   [reserved('declare-fun'),symbol(w),[],symbol('Int')],
   [reserved('declare-fun'),symbol(x),[],symbol('Int')],
@@ -51,14 +53,14 @@ X = [
   [reserved(push),numeral(1)],
   [reserved('check-sat')],
   [reserved(exit)]
-].
+]).
 ```
 
 #### Reading SMT-LIB theory declarations
 
 ```pl
 ?- smtlib_read_theory('../sample/theory/core.smt', X).
-X = [
+X = list([
   symbol(theory),
   symbol('Core'),
   [keyword('smt-lib-version'),decimal(2.6)],
@@ -84,14 +86,14 @@ X = [
   ]],
   [keyword(definition),string(...)],
   [keyword(values),string(...)]
-].
+]).
 ```
 
 #### Reading SMT-LIB logic declarations
 
 ```pl
 ?- smtlib_read_logic('../sample/logic/LIA.smt', X).
-X = [
+X = list([
   symbol(logic),
   symbol('LIA'),
   [keyword('smt-lib-version'),decimal(2.6)],
@@ -102,7 +104,7 @@ X = [
   [keyword(theories),[symbol('Ints')]],
   [keyword(language),string(...)],
   [keyword(extensions),string(...)]
-].
+]).
 
 ```
 
