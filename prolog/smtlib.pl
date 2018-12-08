@@ -4,23 +4,26 @@
   * DESCRIPTION: This module contains predicates for parsing SMT-LIB programs.
   * AUTHORS: José Antonio Riaza Valverde <riaza.valverde@gmail.com>
   * GITHUB: https://github.com/jariazavalverde/prolog-smtlib
-  * UPDATED: 26.11.2018
+  * UPDATED: 08.12.2018
   * 
   **/
 
 
 
 :- module(smtlib, [
-    % from file
+    % read from file
     smtlib_read_expression/2,
     smtlib_read_theory/2,
     smtlib_read_logic/2,
     smtlib_read_script/2,
-    % from chars
+    % read from chars
     smtlib_parse_expression/2,
     smtlib_parse_theory/2,
     smtlib_parse_logic/2,
-    smtlib_parse_script/2
+    smtlib_parse_script/2,
+    % write
+    smtlib_write_to_stream/2,
+    smtlib_write_to_file/2
 ]).
 
 
@@ -117,6 +120,41 @@ smtlib_parse_logic(Chars, Logic) :- logic(Logic, Chars, []).
 % This predicate succeeds when +Chars is a list of characters and
 % ?Script is the script resulting from parsing +Chars as an SMT-LIB script.
 smtlib_parse_script(Chars, Script) :- script(Script, Chars, []).
+
+% smtlib_write_to_stream/2
+% smtlib_write_to_stream(+Stream, +SMTLIB)
+%
+% This predicate succeeds when +SMTLIB is a valid SMT-LIB
+% expression and can be written in the stream +Stream.
+smtlib_write_to_stream(Stream, numeral(N)) :- !, write(Stream, N), write(Stream, ' ').
+smtlib_write_to_stream(Stream, decimal(D)) :- !, write(Stream, D), write(Stream, ' ').
+smtlib_write_to_stream(Stream, hexadecimal(H)) :- !, write(Stream, H), write(Stream, ' ').
+smtlib_write_to_stream(Stream, binary(B)) :- !, write(Stream, B), write(Stream, ' ').
+smtlib_write_to_stream(Stream, symbol(S)) :- !, write(Stream, S), write(Stream, ' ').
+smtlib_write_to_stream(Stream, reserved(R)) :- !, write(Stream, R), write(Stream, ' ').
+smtlib_write_to_stream(Stream, keyword(K)) :- !, write(Stream, ':'), write(Stream, K), write(Stream, ' ').
+smtlib_write_to_stream(Stream, string(S)) :- !,
+    write(Stream, '"'),
+    write(Stream, S),
+    write(Stream, '"'),
+    write(Stream, ' ').
+smtlib_write_to_stream(Stream, list(Expr)) :- !,
+    maplist(smtlib_write_to_stream(Stream), Expr).
+smtlib_write_to_stream(Stream, Expr) :-
+    is_list(Expr), !,
+    write(Stream, '('),
+    maplist(smtlib_write_to_stream(Stream), Expr),
+    writeln(Stream, ')').
+
+% smtlib_write_to_file/2
+% smtlib_write_to_file(+Path, +SMTLIB)
+%
+% This predicate succeeds when +SMTLIB is a valid SMT-LIB
+% expression and can be written in the file +Path.
+smtlib_write_to_file(Path, SMTLIB) :- 
+    open(Path, write, Stream),
+    smtlib_write_to_stream(Stream, SMTLIB),
+    close(Stream).
 
 
 
@@ -216,7 +254,7 @@ reserved_word(X) :- member(X, [
     'define-sort', 'declare-fun', push, pop, assert, 'check-sat', 'get-assertions',
     'get-proof', 'get-unsat-core', 'get-value', 'get-assignment', 'get-info', exit,
     'check-sat-assuming', 'declare-const', 'declare-datatype', 'declare-datatypes',
-    'declare-fun-rec', 'declare-funs-rec', echo, 'get-model', 'get-option',
+    'define-fun', 'define-fun-rec', 'define-funs-rec', echo, 'get-model', 'get-option',
     'get-unsat-assumptions', reset, 'reset-assertions', 'set-option'
 ]).
 
@@ -400,7 +438,7 @@ theory_attribute(X) -->  attribute(X), !.
 theory_attributes([X|Xs]) --> theory_attribute(X), !, theory_attributes(Xs).
 theory_attributes([]) --> [].
 
-theory_decl([symbol(theory),X|Y]) --> whitespaces, lpar, symbol(symbol(theory)), symbol(X), theory_attributes(Y), {Y \= []}, rpar.
+theory_decl(list([symbol(theory),X|Y])) --> whitespaces, lpar, symbol(symbol(theory)), symbol(X), theory_attributes(Y), {Y \= []}, rpar.
 
 
 
@@ -416,7 +454,7 @@ logic_attribute(X) --> attribute(X).
 logic_attributes([X|Xs]) --> logic_attribute(X), !, logic_attributes(Xs).
 logic_attributes([]) --> [].
 
-logic([symbol(logic),X|Xs]) --> whitespaces, lpar, symbol(symbol(logic)), symbol(X), logic_attributes(Xs), {Xs \= []}, rpar.
+logic(list([symbol(logic),X|Xs])) --> whitespaces, lpar, symbol(symbol(logic)), symbol(X), logic_attributes(Xs), {Xs \= []}, rpar.
 
 
 
@@ -479,7 +517,7 @@ command([reserved('get-option'),X]) --> lpar, reserved_word(reserved('get-option
 command([reserved('get-info'),X]) --> lpar, reserved_word(reserved('get-info')), info_flag(X), rpar.
 command([reserved(echo),X]) --> lpar, reserved_word(reserved(echo)), string(X), rpar.
 
-script(X) --> whitespaces, script2(X).
+script(list(X)) --> whitespaces, script2(X).
 script2([X|Xs]) --> command(X), !, script2(Xs).
 script2([]) --> [].
 
