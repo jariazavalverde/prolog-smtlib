@@ -4,7 +4,7 @@
   * DESCRIPTION: This module contains predicates for parsing SMT-LIB programs.
   * AUTHORS: José Antonio Riaza Valverde <riaza.valverde@gmail.com>
   * GITHUB: https://github.com/jariazavalverde/prolog-smtlib
-  * UPDATED: 08.12.2018
+  * UPDATED: 05.01.2019
   * 
   **/
 
@@ -13,11 +13,13 @@
 :- module(smtlib, [
     % read from file
     smtlib_read_expression/2,
+    smtlib_read_expressions/2,
     smtlib_read_theory/2,
     smtlib_read_logic/2,
     smtlib_read_script/2,
     % read from chars
     smtlib_parse_expression/2,
+    smtlib_parse_expressions/2,
     smtlib_parse_theory/2,
     smtlib_parse_logic/2,
     smtlib_parse_script/2,
@@ -54,6 +56,18 @@ smtlib_read_expression(Path, Expression) :-
     stream_to_list(Stream, Chars),
     close(Stream),
     smtlib_parse_expression(Chars, Expression).
+
+% smtlib_read_expressions/2
+% smtlib_read_expressions(+Path, ?Expression)
+%
+% This predicate succeeds when file +Path exists and ?Expression
+% is the expression resulting from parsing the file as a list of
+% S-Expressions of SMT-LIB.
+smtlib_read_expressions(Path, Expression) :-
+    open(Path, read, Stream),
+    stream_to_list(Stream, Chars),
+    close(Stream),
+    smtlib_parse_expressions(Chars, Expression).
 
 % smtlib_read_theory/2
 % smtlib_read_theory(+Path, ?Theory)
@@ -97,6 +111,14 @@ smtlib_read_script(Path, Script) :-
 % ?Expression is the expression resulting from parsing +Chars as an
 % S-Expression of SMT-LIB.
 smtlib_parse_expression(Chars, Expression) :- s_expr(Expression, Chars, []).
+
+% smtlib_parse_expressions/2
+% smtlib_parse_expressions(+Chars, ?Expression)
+%
+% This predicate succeeds when +Chars is a list of characters and
+% ?Expression is the expression resulting from parsing +Chars as a
+% list of S-Expressions of SMT-LIB.
+smtlib_parse_expression(Chars, Expression) :- s_exprs(Expression, Chars, []).
 
 % smtlib_parse_theory/2
 % smtlib_parse_theory(+Chars, ?Theory)

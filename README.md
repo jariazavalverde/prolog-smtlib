@@ -23,10 +23,12 @@ SMT-LIB is an international initiative aimed at facilitating research and develo
 - **smtlib_read_theory/2** - parses SMT-LIB theory declaration from file.
 - **smtlib_read_logic/2** - parses SMT-LIB logic declaration from file.
 - **smtlib_read_expression/2** - parses SMT-LIB expression from file.
+- **smtlib_read_expressions/2** - parses SMT-LIB expressions from file.
 - **smtlib_parse_script/2** - parses SMT-LIB script from chars.
 - **smtlib_parse_theory/2** - parses SMT-LIB theory declaration from chars.
 - **smtlib_parse_logic/2** - parses SMT-LIB logic declaration from chars.
 - **smtlib_parse_expression/2** - parses SMT-LIB expression from chars.
+- **smtlib_parse_expressions/2** - parses SMT-LIB expressions from chars.
 - **smtlib_write_to_stream/2** - writes SMT-LIB expression into stream.
 - **smtlib_write_to_file/2** - writes SMT-LIB expression into file.
 
