@@ -118,7 +118,7 @@ smtlib_parse_expression(Chars, Expression) :- s_expr(Expression, Chars, []).
 % This predicate succeeds when +Chars is a list of characters and
 % ?Expression is the expression resulting from parsing +Chars as a
 % list of S-Expressions of SMT-LIB.
-smtlib_parse_expression(Chars, Expression) :- s_exprs(Expression, Chars, []).
+smtlib_parse_expressions(Chars, Expression) :- s_exprs(Expression, Chars, []).
 
 % smtlib_parse_theory/2
 % smtlib_parse_theory(+Chars, ?Theory)
@@ -338,10 +338,11 @@ spec_constant(X) --> string(X), !.
 s_expr(X) --> whitespaces, s_expr2(X).
 s_expr2(X) --> spec_constant(X), !.
 s_expr2(X) --> symbol(X), !.
+s_expr2(X) --> reserved_word(X), !.
 s_expr2(X) --> keyword(X), !.
-s_expr2(X) --> lpar, s_exprs(X), rpar.
+s_expr2(X) --> lpar, s_exprs(X), whitespaces, rpar.
 
-s_exprs([X|Xs]) --> s_expr2(X), !, s_exprs(Xs).
+s_exprs([X|Xs]) --> s_expr(X), !, s_exprs(Xs).
 s_exprs([]) --> [].
 
 
